@@ -27,10 +27,10 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons }) => {
 
   const navItems = [
     { label: "Trang chủ", path: "/" },
-    { label: "Tính năng", path: "#features" },
-    { label: "Cách sử dụng", path: "#how-it-works" },
-    { label: "Đánh giá", path: "#testimonials" },
-    { label: "FAQ", path: "#faq" },
+    //{ label: "Tính năng", path: "#features" },
+    ///{ label: "Cách sử dụng", path: "#how-it-works" },
+    //{ label: "Đánh giá", path: "#testimonials" },
+    //{ label: "FAQ", path: "#faq" },
   ];
 
   const handleNavClick = (path: string) => {
