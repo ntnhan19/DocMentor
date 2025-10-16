@@ -4,9 +4,9 @@ import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
 import Hero from "../../features/homepage/components/Hero";
 import Features from "../../features/homepage/components/Features";
-import Statistics from "../../features/homepage/components/Statistics";
+//import Statistics from "../../features/homepage/components/Statistics";
 import HowItWorks from "../../features/homepage/components/HowItWorks";
-import Testimonials from "../../features/homepage/components/Testimonials";
+//import Testimonials from "../../features/homepage/components/Testimonials";
 import FAQ from "../../features/homepage/components/FAQ";
 import CallToAction from "../../features/homepage/components/CallToAction";
 
@@ -27,15 +27,7 @@ const HomePage: React.FC = () => {
         </section>
 
         <section className="w-full">
-          <Statistics />
-        </section>
-
-        <section className="w-full">
           <HowItWorks />
-        </section>
-
-        <section className="w-full">
-          <Testimonials />
         </section>
 
         <section className="w-full">
