@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+
 interface HeaderProps {
   hideAuthButtons?: boolean;
+  user?: {
+    name: string;
+    avatar?: string;
+  } | null;
 }
 
-const Header: React.FC<HeaderProps> = ({ hideAuthButtons }) => {
+const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -15,7 +20,6 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons }) => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -25,20 +29,12 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons }) => {
     setIsMobileMenuOpen(false);
   }, [location]);
 
-  const navItems = [
-    { label: "Trang chủ", path: "/" },
-    //{ label: "Tính năng", path: "#features" },
-    ///{ label: "Cách sử dụng", path: "#how-it-works" },
-    //{ label: "Đánh giá", path: "#testimonials" },
-    //{ label: "FAQ", path: "#faq" },
-  ];
+  const navItems = [{ label: "Trang chủ", path: "/" }];
 
   const handleNavClick = (path: string) => {
     if (path.startsWith("#")) {
       const element = document.querySelector(path);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+      if (element) element.scrollIntoView({ behavior: "smooth" });
     } else {
       navigate(path);
     }
@@ -49,7 +45,7 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons }) => {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
           ? "bg-background/80 backdrop-blur-sm shadow-lg py-3 border-b border-accent"
-          : "bg-background py-5" // ✅ đổi từ bg-transparent sang bg-background
+          : "bg-background py-5"
       }`}
     >
       <div className="container mx-auto px-4">
@@ -82,23 +78,41 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons }) => {
             ))}
           </nav>
 
-          {/* Desktop Auth Buttons */}
-          {!hideAuthButtons && (
-            <div className="hidden md:flex items-center gap-4">
-              <button
-                onClick={() => navigate("/login")}
-                className="px-5 py-2 font-semibold rounded-lg text-text-muted transition-colors hover:text-white"
-              >
-                Đăng nhập
-              </button>
-              <button
-                onClick={() => navigate("/register")}
-                className="px-5 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-opacity-90 transition-all shadow-[0_0_15px_rgba(138,66,255,0.5)] hover:shadow-[0_0_25px_rgba(138,66,255,0.7)]"
-              >
-                Đăng ký
-              </button>
-            </div>
-          )}
+          {/* Desktop Right Section */}
+          <div className="hidden md:flex items-center gap-4">
+            {user ? (
+              // ✅ Nếu đã đăng nhập, hiển thị user info
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-full overflow-hidden">
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : null}
+                </div>
+                <span className="text-white text-sm">{user.name}</span>
+              </div>
+            ) : !hideAuthButtons ? (
+              // ✅ Nếu chưa login và không ẩn nút
+              <>
+                <button
+                  onClick={() => navigate("/login")}
+                  className="px-5 py-2 font-semibold rounded-lg text-text-muted hover:text-white transition-colors"
+                >
+                  Đăng nhập
+                </button>
+                <button
+                  onClick={() => navigate("/register")}
+                  className="px-5 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-opacity-90 transition-all shadow-[0_0_15px_rgba(138,66,255,0.5)] hover:shadow-[0_0_25px_rgba(138,66,255,0.7)]"
+                >
+                  Đăng ký
+                </button>
+              </>
+            ) : null}
+          </div>
+
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -149,7 +163,7 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons }) => {
                   {item.label}
                 </button>
               ))}
-              {!hideAuthButtons && (
+              {!hideAuthButtons && !user && (
                 <div className="border-t border-background mt-2 pt-2 px-4 space-y-2">
                   <button
                     onClick={() => navigate("/login")}
