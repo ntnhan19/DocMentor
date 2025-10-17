@@ -1,13 +1,19 @@
 // src/routes/index.tsx
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+} from "react-router-dom";
 import HomePage from "../pages/public/HomePage";
 import NotFoundPage from "../pages/public/NotFoundPage";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
-import UserLayout from "../components/layout/UserLayout"; // chú ý path đúng
+import UserLayout from "../components/layout/UserLayout";
 import DashboardPage from "../pages/user/DashboardPage";
+import PrivateRoute from "./PrivateRoute";
 
 const router = createBrowserRouter([
+  // Public Routes
   {
     path: "/",
     element: <HomePage />,
@@ -21,18 +27,50 @@ const router = createBrowserRouter([
     path: "/register",
     element: <RegisterPage />,
   },
-  {
-    path: "/user",
-    element: <UserLayout />, // ✅ không truyền children nữa
+  // Auth Routes (chỉ truy cập khi chưa login)
+  /*{
+    element: <PublicRoute />,
     children: [
       {
-        index: true, // /user
-        element: <DashboardPage />,
+        path: "/login",
+        element: <LoginPage />,
       },
-      // có thể thêm các route khác:
-      // { path: "profile", element: <ProfilePage /> },
-      // { path: "documents", element: <DocumentsPage /> },
+      {
+        path: "/register",
+        element: <RegisterPage />,
+      },
     ],
+  },*/
+
+  // Protected User Routes
+  {
+    element: <PrivateRoute />,
+    children: [
+      {
+        path: "/user",
+        element: <UserLayout />,
+        children: [
+          {
+            index: true, // /user
+            element: <Navigate to="/user/dashboard" replace />,
+          },
+          {
+            path: "dashboard",
+            element: <DashboardPage />,
+          },
+          // Có thể thêm các route khác:
+          // { path: "profile", element: <ProfilePage /> },
+          // { path: "documents", element: <DocumentsPage /> },
+          // { path: "chat", element: <ChatPage /> },
+        ],
+      },
+    ],
+  },
+
+  // 404 Page
+  {
+    path: "*",
+    element: <NotFoundPage />,
   },
 ]);
 
