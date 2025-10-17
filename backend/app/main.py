@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from .config import settings
-
+from .routers import auth  # Add this import
 
 app = FastAPI(
     title="DocMentor API",
@@ -19,6 +19,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include routers
+app.include_router(auth.router) 
+
 @app.get("/")
 def read_root():
     return {
@@ -30,5 +33,3 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
-
-# We'll add routers later
