@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+import os
+from pathlib import Path
 
 class Settings(BaseSettings):
     # Database
@@ -24,7 +26,7 @@ class Settings(BaseSettings):
     ALLOWED_EXTENSIONS: str = ".pdf,.docx,.txt"
     
     class Config:
-        env_file = ".env"
+        env_file = str(Path(__file__).resolve().parent.parent / ".env")
         case_sensitive = True
 
 @lru_cache()

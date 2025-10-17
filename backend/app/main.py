@@ -2,12 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from .config import settings
-from .routers import auth  # Add this import
+from .routers import auth, documents
 
 app = FastAPI(
     title="DocMentor API",
     description="AI Agent for Document Retrieval and Analysis",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # CORS
@@ -21,15 +23,17 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router) 
+app.include_router(documents.router)
 
 @app.get("/")
 def read_root():
     return {
         "message": "Welcome to DocMentor API",
         "version": "1.0.0",
-        "status": "running"
+        "status": "running",
+        "docs": "/docs"
     }
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "database": "connected"}
