@@ -1,19 +1,33 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { mockAuthService, User } from "@/services/auth/mockAuthService";
+
 interface UserSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 const Sidebar = ({ isOpen, onClose }: UserSidebarProps) => {
+  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+
+  // Lấy user khi component mount
+  useEffect(() => {
+    const currentUser = mockAuthService.getCurrentUser();
+    setUser(currentUser);
+  }, []);
+
+  const handleLogout = () => {
+    mockAuthService.logout();
+    setUser(null);
+    navigate("/login"); // ✅ Điều hướng sang trang login sau khi logout
+  };
+
   const menuItems = [
     { label: "Dashboard", path: "/dashboard", active: true },
-    {
-      label: "Tài liệu của tôi",
-      path: "/documents",
-      active: false,
-    },
+    { label: "Tài liệu của tôi", path: "/documents", active: false },
     { label: "Chat AI", path: "/chat", active: false },
     { label: "Đã lưu", path: "/saved", active: false },
-
     { label: "Tìm kiếm nâng cao", path: "/search", active: false },
   ];
 
@@ -75,23 +89,45 @@ const Sidebar = ({ isOpen, onClose }: UserSidebarProps) => {
         <div className="border-t border-accent pt-4 mt-4">
           <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-3 mb-3 border border-primary/20">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">BL</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center overflow-hidden">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <span className="text-white text-sm font-medium">
+                    {user?.name?.charAt(0)?.toUpperCase() || "?"}
+                  </span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">
-                  Bich Luan
+                  {user?.name || "Khách"}
                 </p>
                 <p className="text-xs text-text-muted truncate">
-                  bichluan253@gmail.com
+                  {user?.email || "Chưa đăng nhập"}
                 </p>
               </div>
             </div>
           </div>
 
-          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all">
-            <span className="text-sm font-medium">Đăng xuất</span>
-          </button>
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
+            >
+              <span className="text-sm font-medium">Đăng xuất</span>
+            </button>
+          ) : (
+            <a
+              href="/login"
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-primary hover:bg-primary/10 transition-all"
+            >
+              <span className="text-sm font-medium">Đăng nhập</span>
+            </a>
+          )}
         </div>
       </nav>
     </aside>

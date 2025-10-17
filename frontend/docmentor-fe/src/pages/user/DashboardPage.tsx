@@ -1,3 +1,6 @@
+// src/pages/user/DashboardPage.tsx
+
+import { useAuth } from "../../app/providers/AuthProvider";
 import WelcomeBanner from "../../features/dashboard/components/user/WelcomeBanner";
 import QuickStats from "../../features/dashboard/components/user/QuickStats";
 import RecentDocuments from "../../features/dashboard/components/user/RecentDocuments";
@@ -6,12 +9,15 @@ import StudyProgress from "../../features/dashboard/components/user/StudyProgres
 import RecommendedDocs from "../../features/dashboard/components/user/RecommendedDocs";
 import QuickActions from "../../features/dashboard/components/user/QuickActions";
 
-export default function UserDashboard() {
-  // ==== MOCK DATA NGAY TẠI ĐÂY ====
+export default function DashboardPage() {
+  const { user } = useAuth();
+
+  // ==== MOCK DATA với thông tin từ Auth ====
   const mockUser = {
-    name: "Bich Luan",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-    level: "Pro Member",
+    name: user?.name || "User",
+    avatar:
+      user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
+    level: user?.role === "admin" ? "Admin" : "Pro Member",
     joinDate: "2025-10-17",
   };
 
