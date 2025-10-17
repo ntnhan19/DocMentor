@@ -12,8 +12,6 @@ const QuickStats: React.FC<QuickStatsProps> = ({ stats }) => {
   const items = [
     { label: "Tài liệu", value: stats.totalDocuments },
     { label: "Truy vấn AI", value: stats.totalQueries },
-    { label: "Giờ học", value: stats.studyHours },
-    { label: "Chuỗi ngày học", value: stats.streak },
   ];
 
   return (

@@ -5,7 +5,6 @@ import WelcomeBanner from "../../features/dashboard/components/user/WelcomeBanne
 import QuickStats from "../../features/dashboard/components/user/QuickStats";
 import RecentDocuments from "../../features/dashboard/components/user/RecentDocuments";
 import RecentQueries from "../../features/dashboard/components/user/RecentQueries";
-import StudyProgress from "../../features/dashboard/components/user/StudyProgress";
 import RecommendedDocs from "../../features/dashboard/components/user/RecommendedDocs";
 import QuickActions from "../../features/dashboard/components/user/QuickActions";
 
@@ -130,7 +129,6 @@ export default function DashboardPage() {
 
           <div className="space-y-6">
             <QuickActions />
-            <StudyProgress />
             <RecommendedDocs recommendations={mockRecommendations} />
           </div>
         </div>

@@ -14,7 +14,7 @@ const RecentQueries: React.FC<RecentQueriesProps> = ({ queries }) => {
   return (
     <div className="bg-white p-5 rounded-xl shadow">
       <h3 className="text-lg font-semibold mb-4 text-gray-800">
-        🤖 Truy vấn AI gần đây
+        Truy vấn AI gần đây
       </h3>
       <div className="space-y-4">
         {queries.map((q) => (
