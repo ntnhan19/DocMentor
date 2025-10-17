@@ -10,9 +10,6 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({ user, streak }) => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Xin chào, {user.name}! 👋</h2>
-          <p className="text-sm opacity-90 mt-1">
-            Bạn đã duy trì chuỗi học {streak} ngày liên tiếp 🎯
-          </p>
         </div>
         <img
           src={user.avatar}
