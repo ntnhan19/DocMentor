@@ -16,14 +16,27 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         "token_type": result["token_type"]
     }
 
-@router.post("/login", response_model=Token)
+@router.post("/login") 
 def login(credentials: UserLogin, db: Session = Depends(get_db)):
     """Login and get access token"""
-    result = AuthService.authenticate_user(db, credentials.email, credentials.password)
-    return {
-        "access_token": result["access_token"],
-        "token_type": result["token_type"]
-    }
+    try:
+        result = AuthService.authenticate_user(db, credentials.email, credentials.password)
+        return {
+            "success": True,
+            "user": {
+                "id": result["user"].id,
+                "email": result["user"].email,
+                "name": result["user"].full_name or result["user"].email,  # Map full_name → name (fallback email)
+                "role": result["user"].role.value,  # Enum → string ("student"|"lecturer"|"admin")
+                "avatar": None  
+            },
+            "token": result["access_token"], 
+            "message": "Đăng nhập thành công!"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Lỗi server")
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user = Depends(get_current_user)):
