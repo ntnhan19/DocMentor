@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Query
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from ..database import get_db
+import logging
+from ..database import get_db, SessionLocal
 from ..schemas.document import (
     DocumentResponse, 
     DocumentList, 
@@ -10,43 +11,77 @@ from ..schemas.document import (
     DocumentStats
 )
 from ..services.document_service import DocumentService
+from ..services.document_processor import DocumentProcessor
 from ..utils.security import get_current_user
 from ..models.user import User
 from ..models.document import Document
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
+logger = logging.getLogger(__name__)
+
+# ✅ FIX: Async background task với proper error handling
+async def process_document_background(document_id: int, file_path: str):
+    """
+    Background task to process document
+    IMPORTANT: Create new DB session for background task
+    """
+    logger.info(f"🚀 Background task STARTED for document {document_id}")
+    db = SessionLocal()
+    try:
+        processor = DocumentProcessor()
+        logger.info(f"📝 Calling processor.process_document for doc {document_id}")
+        
+        # ✅ Await the async function
+        await processor.process_document(db, document_id, file_path)
+        
+        logger.info(f"✅ Background task COMPLETED for document {document_id}")
+    except Exception as e:
+        logger.error(f"❌ Background task FAILED for doc {document_id}: {str(e)}", exc_info=True)
+        
+        # Update document status to failed
+        try:
+            doc = db.query(Document).filter(Document.id == document_id).first()
+            if doc:
+                if not doc.metadata_:
+                    doc.metadata_ = {}
+                doc.metadata_['processing_status'] = 'failed'
+                doc.metadata_['error'] = str(e)
+                db.commit()
+        except Exception as db_err:
+            logger.error(f"❌ Failed to update error status: {str(db_err)}")
+    finally:
+        db.close()
+        logger.info(f"🔒 DB session closed for document {document_id}")
 
 @router.post("/upload", response_model=DocumentUploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_document(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     title: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Upload a new document
+    """Upload document and process in background"""
     
-    - **file**: Document file (PDF, DOCX, TXT)
-    - **title**: Optional custom title (defaults to filename)
-    """
+    logger.info(f"📤 Upload request from user {current_user.id}: {file.filename}")
+    
+    # Upload document
     document = await DocumentService.upload_document(db, file, current_user, title)
     
+    logger.info(f"✅ Document saved to DB: ID={document.id}, Path={document.file_path}")
+    
+    # ✅ Add background task
+    logger.info(f"⏰ Adding background task for document {document.id}")
+    background_tasks.add_task(
+        process_document_background,
+        document.id,
+        document.file_path
+    )
+    
     return DocumentUploadResponse(
-    message="Document uploaded successfully",
-    document=DocumentResponse.model_validate({
-        "id": document.id,
-        "title": document.title,
-        "file_path": document.file_path,
-        "file_type": document.file_type,
-        "file_size": document.file_size,
-        "processed": document.processed,
-        "created_at": document.created_at,
-        "updated_at": document.updated_at,
-        "doc_metadata": dict(document.doc_metadata or {}),
-        "user_id": document.user_id
-    })
-)
-
+        message="Document uploaded successfully. Processing in background...",
+        document=document
+    )
 
 @router.get("/", response_model=DocumentList)
 def get_documents(
@@ -56,13 +91,7 @@ def get_documents(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get all documents for current user
-    
-    - **skip**: Number of documents to skip (pagination)
-    - **limit**: Maximum number of documents to return
-    - **search**: Search by title (optional)
-    """
+    """Get all documents for current user"""
     documents = DocumentService.get_user_documents(db, current_user, skip, limit, search)
     total = db.query(Document).filter(Document.user_id == current_user.id).count()
     
