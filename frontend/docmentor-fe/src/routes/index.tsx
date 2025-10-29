@@ -11,7 +11,11 @@ import RegisterPage from "../pages/auth/RegisterPage";
 import UserLayout from "../components/layout/UserLayout";
 import DashboardPage from "../pages/user/DashboardPage";
 import PrivateRoute from "./PrivateRoute";
-
+import DocumentsPage from "../pages/user/DocumentsPage";
+import DocumentDetailPage from "@/pages/user/DocumentDetailPage";
+import ChatPage from "@/pages/user/ChatPage";
+import ProfilePage from "@/pages/user/ProfilePage";
+import SettingsPage from "@/pages/user/SettingsPage";
 const router = createBrowserRouter([
   // Public Routes
   {
@@ -27,6 +31,7 @@ const router = createBrowserRouter([
     path: "/register",
     element: <RegisterPage />,
   },
+  { path: "chat", element: <ChatPage /> },
   // Auth Routes (chỉ truy cập khi chưa login)
   /*{
     element: <PublicRoute />,
@@ -58,8 +63,25 @@ const router = createBrowserRouter([
             path: "dashboard",
             element: <DashboardPage />,
           },
+          {
+            path: "documents", // <-- Thêm route mới
+            element: <DocumentsPage />,
+          },
+          {
+            path: "documents/:documentId", // <-- Thêm route động
+            element: <DocumentDetailPage />,
+          },
+          {
+            path: "chat", // <-- Route cho trang chat chung
+            element: <ChatPage />,
+          },
+          {
+            path: "chat/:conversationId", // <-- Route cho một cuộc chat cụ thể (để dành)
+            element: <ChatPage />,
+          },
           // Có thể thêm các route khác:
-          // { path: "profile", element: <ProfilePage /> },
+          { path: "profile", element: <ProfilePage /> },
+          { path: "settings", element: <SettingsPage /> },
           // { path: "documents", element: <DocumentsPage /> },
           // { path: "chat", element: <ChatPage /> },
         ],

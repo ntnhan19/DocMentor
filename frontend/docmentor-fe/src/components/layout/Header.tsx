@@ -57,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
           >
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
               <img
-                src="/src/assets/logo.png"
+                src="/assets/logo.png"
                 alt="Logo"
                 className="w-10 h-10 object-contain"
               />

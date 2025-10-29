@@ -3,7 +3,7 @@ interface QuickStatsProps {
   stats: {
     totalDocuments: number;
     totalQueries: number;
-    studyHours: number;
+
     streak: number;
   };
 }
