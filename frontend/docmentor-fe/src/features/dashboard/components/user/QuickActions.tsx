@@ -1,25 +1,29 @@
 // User dashboard components
+// ===== QUICK ACTIONS =====
 const actions = [
-  { label: "Tải tài liệu mới", icon: "📤" },
-  { label: "Tạo truy vấn AI", icon: "🤖" },
-  { label: "Phân tích tài liệu", icon: "📊" },
-  { label: "Xem thống kê", icon: "📈" },
+  { label: "Tải tài liệu mới", icon: "📤", color: "primary" },
+  { label: "Tạo truy vấn AI", icon: "🤖", color: "secondary" },
+  { label: "Phân tích tài liệu", icon: "📊", color: "purple" },
+  { label: "Xem thống kê", icon: "📈", color: "pink" },
 ];
 
 const QuickActions = () => {
   return (
-    <div className="bg-white p-5 rounded-xl shadow">
-      <h3 className="text-lg font-semibold mb-4 text-gray-800">
-        ⚡ Hành động nhanh
-      </h3>
-      <div className="grid grid-cols-2 gap-3">
+    <div className="bg-accent border border-white/5 p-6 rounded-xl shadow-xl animate-slide-in-right">
+      <div className="flex items-center gap-2 mb-5">
+        <span className="text-2xl">⚡</span>
+        <h3 className="text-xl font-bold text-white">Hành động nhanh</h3>
+      </div>
+      <div className="grid grid-cols-1 gap-3">
         {actions.map((action, index) => (
           <button
             key={index}
-            className="flex items-center justify-center gap-2 p-3 bg-gray-50 hover:bg-indigo-50 rounded-lg border border-gray-100 transition"
+            className="group flex items-center gap-3 p-4 bg-background border border-white/5 hover:border-primary/50 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5"
           >
-            <span className="text-lg">{action.icon}</span>
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-2xl group-hover:scale-110 transition-transform">
+              {action.icon}
+            </span>
+            <span className="text-sm font-semibold text-white group-hover:text-primary transition-colors">
               {action.label}
             </span>
           </button>
