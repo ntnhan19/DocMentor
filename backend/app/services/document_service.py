@@ -49,10 +49,10 @@ class DocumentService:
         # Calculate file hash
         file_hash = calculate_file_hash(file_path)
         
-        # Check if file already exists (duplicate check)
+        # Check for duplicate uploads based on file hash
         existing_doc = db.query(Document).filter(
             Document.user_id == user.id,
-            Document.doc_metadata["file_hash"].cast(String) == file_hash
+            Document.metadata_["file_hash"].as_string() == file_hash
         ).first()
         
         if existing_doc:
@@ -63,14 +63,14 @@ class DocumentService:
                 detail="This file has already been uploaded"
             )
         
-        # Create document record
+        # Create Document record
         document = Document(
             user_id=user.id,
             title=title or file.filename,
             file_path=file_path,
-            file_type=file_ext[1:],  # Remove dot
+            file_type=file_ext[1:],
             file_size=file_size,
-            doc_metadata={
+            metadata_={  
                 "original_filename": file.filename,
                 "file_hash": file_hash,
                 "mime_type": file.content_type
@@ -95,7 +95,6 @@ class DocumentService:
         """Get all documents for a user with pagination"""
         query = db.query(Document).filter(Document.user_id == user.id)
         
-        # Search by title
         if search:
             query = query.filter(Document.title.ilike(f"%{search}%"))
         
@@ -132,7 +131,9 @@ class DocumentService:
             document.title = title
         
         if metadata:
-            document.metadata.update(metadata)
+            if not document.metadata_:
+                document.metadata_ = {}
+            document.metadata_.update(metadata)
         
         db.commit()
         db.refresh(document)
@@ -144,11 +145,9 @@ class DocumentService:
         """Delete document"""
         document = DocumentService.get_document_by_id(db, document_id, user)
         
-        # Delete physical file
         if os.path.exists(document.file_path):
             os.remove(document.file_path)
         
-        # Delete from database
         db.delete(document)
         db.commit()
         
@@ -164,10 +163,8 @@ class DocumentService:
         processed_count = 0
         
         for doc in documents:
-            # Count by type
             by_type[doc.file_type] = by_type.get(doc.file_type, 0) + 1
             
-            # Count processed
             if doc.processed:
                 processed_count += 1
         
