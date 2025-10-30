@@ -5,12 +5,12 @@ from typing import Optional, List, Dict, Any
 # Request schemas
 class DocumentCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
-    
+
 class DocumentUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=255)
-    doc_metadata: Optional[Dict[str, Any]] = None
+    
+    metadata: Optional[Dict[str, Any]] = None
 
-# Response schemas
 class DocumentResponse(BaseModel):
     id: int
     user_id: int
@@ -18,7 +18,7 @@ class DocumentResponse(BaseModel):
     file_path: str
     file_type: str
     file_size: int
-    doc_metadata: Dict[str, Any]
+    metadata_: Optional[Dict[str, Any]] = None
     processed: bool
     created_at: datetime
     updated_at: datetime

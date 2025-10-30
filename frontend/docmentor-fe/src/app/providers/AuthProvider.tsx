@@ -6,7 +6,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { mockAuthService, User } from "../../services/auth/mockAuthService";
+import { realAuthService, User } from "../../services/auth/authService";
 
 interface AuthContextType {
   user: User | null;
@@ -17,7 +17,7 @@ interface AuthContextType {
     password: string,
     rememberMe: boolean
   ) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;  // Làm logout async để phù hợp với real service
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,14 +37,29 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);  // Thêm state riêng để track auth status
 
   useEffect(() => {
-    // Check if user is already logged in
-    const currentUser = mockAuthService.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-    }
-    setIsLoading(false);
+    // Check if user is already logged in (async vì real service dùng API verify)
+    const initAuth = async () => {
+      try {
+        const currentUser = await realAuthService.getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+          const authStatus = await realAuthService.isAuthenticated();  // Verify token với backend
+          setIsAuthenticated(authStatus);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   const login = async (
@@ -52,18 +67,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     password: string,
     rememberMe: boolean
   ) => {
-    const response = await mockAuthService.login(email, password, rememberMe);
-    setUser(response.user);
+    try {
+      const response = await realAuthService.login(email, password, rememberMe);
+      setUser(response.user);
+      setIsAuthenticated(true);  // Set auth status sau login thành công
+    } catch (error: any) {
+      console.error("Login error:", error);
+      throw error;  // Re-throw để component gọi login handle error
+    }
   };
 
-  const logout = () => {
-    mockAuthService.logout();
-    setUser(null);
+  const logout = async () => {
+    try {
+      await realAuthService.logout();  // Gọi API logout nếu có
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+    }
   };
 
   const value: AuthContextType = {
     user,
-    isAuthenticated: !!user,
+    isAuthenticated,
     isLoading,
     login,
     logout,
