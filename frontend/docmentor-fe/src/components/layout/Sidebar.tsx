@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { mockAuthService, User } from "@/services/auth/mockAuthService";
 
 interface UserSidebarProps {
@@ -10,6 +10,7 @@ interface UserSidebarProps {
 const Sidebar = ({ isOpen, onClose }: UserSidebarProps) => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
+  const location = useLocation(); // ✅ Dùng để xác định menu nào đang active
 
   // Lấy user khi component mount
   useEffect(() => {
@@ -23,19 +24,14 @@ const Sidebar = ({ isOpen, onClose }: UserSidebarProps) => {
     navigate("/login"); // ✅ Điều hướng sang trang login sau khi logout
   };
 
+  // ✅ Cập nhật đúng đường dẫn (nằm trong /user)
   const menuItems = [
-    { label: "Dashboard", path: "/dashboard", active: true },
-    { label: "Tài liệu của tôi", path: "/documents", active: false },
-    { label: "Chat AI", path: "/chat", active: false },
-    { label: "Đã lưu", path: "/saved", active: false },
-    { label: "Tìm kiếm nâng cao", path: "/search", active: false },
+    { label: "Dashboard", path: "/user/dashboard" },
+    { label: "Tài liệu của tôi", path: "/user/documents" },
+    { label: "Chat AI", path: "/user/chat" },
   ];
 
-  const settingsItems = [
-    { label: "Hồ sơ", path: "/profile" },
-    { label: "Cài đặt", path: "/settings" },
-    { label: "Trợ giúp", path: "/help" },
-  ];
+  const settingsItems = [{ label: "Cài đặt", path: "/user/settings" }];
 
   return (
     <aside
@@ -51,36 +47,35 @@ const Sidebar = ({ isOpen, onClose }: UserSidebarProps) => {
           </h3>
           <div className="space-y-1">
             {menuItems.map((item, index) => (
-              <a
+              <Link
                 key={index}
-                href={item.path}
+                to={item.path}
                 onClick={onClose}
                 className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                  item.active
+                  location.pathname.startsWith(item.path)
                     ? "bg-primary/20 text-primary font-medium shadow-sm border border-primary/30"
                     : "text-text-muted hover:bg-accent hover:text-white"
                 }`}
               >
                 <span className="text-sm">{item.label}</span>
-              </a>
+              </Link>
             ))}
           </div>
 
           <div className="my-6 border-t border-accent" />
 
           {/* Settings Section */}
-          <h3 className="px-4 mb-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
-            Cài đặt
-          </h3>
+
           <div className="space-y-1">
             {settingsItems.map((item, index) => (
-              <a
+              <Link
                 key={index}
-                href={item.path}
+                to={item.path}
+                onClick={onClose}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg text-text-muted hover:bg-accent hover:text-white transition-all"
               >
                 <span className="text-sm">{item.label}</span>
-              </a>
+              </Link>
             ))}
           </div>
         </div>
@@ -121,12 +116,12 @@ const Sidebar = ({ isOpen, onClose }: UserSidebarProps) => {
               <span className="text-sm font-medium">Đăng xuất</span>
             </button>
           ) : (
-            <a
-              href="/login"
+            <Link
+              to="/login"
               className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-primary hover:bg-primary/10 transition-all"
             >
               <span className="text-sm font-medium">Đăng nhập</span>
-            </a>
+            </Link>
           )}
         </div>
       </nav>

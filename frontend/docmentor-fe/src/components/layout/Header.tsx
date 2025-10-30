@@ -29,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
     setIsMobileMenuOpen(false);
   }, [location]);
 
-  const navItems = [{ label: "Trang chủ", path: "/" }];
+  //const navItems = [{ label: "Trang chủ", path: "/" }];
 
   const handleNavClick = (path: string) => {
     if (path.startsWith("#")) {
@@ -57,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
           >
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
               <img
-                src="/src/assets/logo.png"
+                src="/assets/logo.png"
                 alt="Logo"
                 className="w-10 h-10 object-contain"
               />
@@ -66,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          {/*<nav className="hidden md:flex items-center gap-8">
             {navItems.map((item) => (
               <button
                 key={item.path}
@@ -154,7 +154,7 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
         {isMobileMenuOpen && (
           <div className="md:hidden mt-4 pb-4 bg-accent rounded-lg shadow-lg">
             <nav className="flex flex-col">
-              {navItems.map((item) => (
+              {/*navItems.map((item) => (
                 <button
                   key={item.path}
                   onClick={() => handleNavClick(item.path)}
@@ -162,7 +162,7 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
                 >
                   {item.label}
                 </button>
-              ))}
+              ))*/}
               {!hideAuthButtons && !user && (
                 <div className="border-t border-background mt-2 pt-2 px-4 space-y-2">
                   <button

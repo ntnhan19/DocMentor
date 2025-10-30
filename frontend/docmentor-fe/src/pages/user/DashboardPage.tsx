@@ -5,14 +5,12 @@ import WelcomeBanner from "../../features/dashboard/components/user/WelcomeBanne
 import QuickStats from "../../features/dashboard/components/user/QuickStats";
 import RecentDocuments from "../../features/dashboard/components/user/RecentDocuments";
 import RecentQueries from "../../features/dashboard/components/user/RecentQueries";
-import StudyProgress from "../../features/dashboard/components/user/StudyProgress";
 import RecommendedDocs from "../../features/dashboard/components/user/RecommendedDocs";
 import QuickActions from "../../features/dashboard/components/user/QuickActions";
 
 export default function DashboardPage() {
   const { user } = useAuth();
 
-  // ==== MOCK DATA với thông tin từ Auth ====
   const mockUser = {
     name: user?.name || "User",
     avatar:
@@ -115,9 +113,8 @@ export default function DashboardPage() {
     },
   ];
 
-  // ==== JSX TRẢ VỀ ====
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <WelcomeBanner user={mockUser} streak={mockStats.streak} />
         <QuickStats stats={mockStats} />
@@ -130,7 +127,6 @@ export default function DashboardPage() {
 
           <div className="space-y-6">
             <QuickActions />
-            <StudyProgress />
             <RecommendedDocs recommendations={mockRecommendations} />
           </div>
         </div>
