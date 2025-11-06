@@ -36,7 +36,19 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Lỗi server")
+        # THÊM DÒNG NÀY ĐỂ IN LỖI RA TERMINAL:
+        print(f"!!!!!!!!!!!!!!! LỖI ĐĂNG NHẬP: {e} !!!!!!!!!!!!!!!")
+        
+        # Bạn cũng có thể dùng logger nếu đã setup
+        # import logging
+        # logger = logging.getLogger(__name__)
+        # logger.error(f"Login error: {e}", exc_info=True)
+
+        # Bây giờ mới raise lỗi 500
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred."
+        )
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user = Depends(get_current_user)):
