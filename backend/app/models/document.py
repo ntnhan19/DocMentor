@@ -17,6 +17,7 @@ class Document(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    
     # Relationships
     owner = relationship("User", back_populates="documents")
 
@@ -35,7 +36,7 @@ class Query(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     execution_time = Column(Integer, nullable=True)  # milliseconds
     
-    # Relationships
+    rating = Column(Integer, nullable=True)
     user = relationship("User", back_populates="queries")
 
     def __repr__(self):

@@ -11,6 +11,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+app.include_router(auth.router)
+app.include_router(documents.router)
+app.include_router(query.router)
 
 # CORS
 app.add_middleware(
