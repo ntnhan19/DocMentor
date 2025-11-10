@@ -1,0 +1,87 @@
+# ===============================
+# General
+# ===============================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.log
+*.sqlite3
+*.db
+.DS_Store
+.env
+.env.*
+*.env
+.env.local
+.vscode/
+.idea/
+*.swp
+
+# ===============================
+# Node / Frontend
+# ===============================
+frontend/node_modules/
+frontend/.next/
+frontend/dist/
+frontend/build/
+frontend/.cache/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# ===============================
+# Python / FastAPI backend
+# ===============================
+backend/venv/
+backend/.venv/
+backend/venv_support/
+backend/env/
+backend/__pycache__/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.coverage
+backend/htmlcov/
+backend/alembic/versions/*.pyc
+backend/.ruff_cache/
+backend/.env
+backend/uploads/
+!backend/uploads/.gitkeep
+backend/*.db
+
+# ===============================
+# Jupyter / ML experiments
+# ===============================
+*.ipynb_checkpoints
+notebooks/.ipynb_checkpoints
+*.pickle
+*.h5
+*.pt
+*.pkl
+*.npz
+*.npy
+model_weights/
+ml_models/
+experiments/
+
+# ===============================
+# Build artifacts & logs
+# ===============================
+*.egg-info/
+.eggs/
+*.spec
+*.out
+*.log
+logs/
+coverage/
+dist/
+build/
+.cache/
+
+# ===============================
+# OS / Editor junk
+# ===============================
+Thumbs.db
+ehthumbs.db
+Desktop.ini

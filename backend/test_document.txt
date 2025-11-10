@@ -1,0 +1,26 @@
+
+Machine Learning là gì?
+
+Machine Learning (Học máy) là một nhánh của trí tuệ nhân tạo (AI) cho phép 
+máy tính học từ dữ liệu và cải thiện hiệu suất của chúng mà không cần được 
+lập trình rõ ràng.
+
+Các loại Machine Learning:
+
+1. Supervised Learning (Học có giám sát)
+Trong supervised learning, mô hình được huấn luyện trên dữ liệu có nhãn.
+Ví dụ: Phân loại email spam, dự đoán giá nhà.
+
+2. Unsupervised Learning (Học không giám sát)
+Mô hình tìm ra các patterns trong dữ liệu không có nhãn.
+Ví dụ: Phân cụm khách hàng, giảm chiều dữ liệu.
+
+3. Reinforcement Learning (Học tăng cường)
+Agent học thông qua tương tác với môi trường và nhận phản hồi.
+Ví dụ: Game AI, robot tự động.
+
+Thuật toán phổ biến:
+- Linear Regression
+- Decision Trees
+- Neural Networks
+- K-Means Clustering

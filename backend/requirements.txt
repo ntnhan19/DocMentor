@@ -1,0 +1,35 @@
+
+# Core (cài trước)
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+python-dotenv==1.0.0
+
+# Utilities (cài trước các package phức tạp)
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Database
+sqlalchemy==2.0.23
+psycopg2-binary>=2.9.9
+alembic==1.12.1
+
+# Authentication
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# AI/ML - GEMINI
+google-generativeai==0.3.2
+
+# Document Processing (trước torch)
+PyPDF2==3.0.1
+python-docx==1.1.0
+pdfplumber==0.10.3
+
+# Vector DB
+pinecone-client>=3.0.0
+
+# ML Libraries (cài cuối cùng vì nặng nhất)
+torch
+sentence-transformers==2.2.2
+langchain==0.1.0
