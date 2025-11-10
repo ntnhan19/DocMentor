@@ -23,7 +23,7 @@ const LoginPage: React.FC = () => {
       await login(data.email, data.password, data.rememberMe);
 
       // Navigate to dashboard on success
-      navigate("/user/dashboard");
+      navigate("/user");
     } catch (err: any) {
       setError(err.message || "Đăng nhập thất bại. Vui lòng thử lại.");
     } finally {

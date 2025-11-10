@@ -19,6 +19,8 @@ export default {
         "bounce-slow": "bounce 2s infinite",
         // Thêm hiệu ứng float mới
         float: "float 4s ease-in-out infinite",
+        // Thêm gradient animation cho Hero
+        gradient: "gradient 3s linear infinite",
       },
       keyframes: {
         fadeIn: {
@@ -43,6 +45,14 @@ export default {
           "50%": { transform: "translateY(-10px)" },
           "100%": { transform: "translateY(0px)" },
         },
+        // Keyframe cho gradient animation
+        gradient: {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+      },
+      backgroundSize: {
+        "gradient-animate": "200% auto",
       },
     },
   },

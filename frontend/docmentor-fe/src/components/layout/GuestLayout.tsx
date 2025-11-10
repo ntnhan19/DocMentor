@@ -1,11 +1,10 @@
+// src/layouts/GuestLayout.tsx
+
 import React from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import Header from "../../components/layout/Header";
 
-const UserLayout: React.FC = () => {
-  const location = useLocation();
-  const isChatPage = location.pathname.includes("/user/chat"); // ✅ chỉ nhận dạng ChatPage
-
+const GuestLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Decorative gradient backgrounds */}
@@ -21,21 +20,17 @@ const UserLayout: React.FC = () => {
         ></div>
       </div>
 
-      {/* Header cố định */}
+      {/* Header - Fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-b border-primary/10">
-        <Header hideAuthButtons={true} />
+        <Header hideAuthButtons={false} />
       </div>
 
-      {/* Layout chính */}
-      <div
-        className={`relative z-10 pt-16 ${
-          isChatPage
-            ? "flex h-screen overflow-hidden" // ✅ ChatPage: cố định full screen
-            : "min-h-screen overflow-y-auto" // ✅ Trang khác: cuộn tự nhiên
-        }`}
-      >
-        <main className="flex-1 flex flex-col w-full">
-          <div className="flex-1">
+      {/* Main Layout Container */}
+      <div className="flex h-screen pt-16 relative z-10">
+        {/* Main Content Area - Full width */}
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {/* Content wrapper */}
+          <div className="flex-1 overflow-hidden">
             <div className="h-full animate-fade-in">
               <Outlet />
             </div>
@@ -43,7 +38,7 @@ const UserLayout: React.FC = () => {
         </main>
       </div>
 
-      {/* Decorative grid pattern overlay */}
+      {/* Decorative grid pattern overlay (subtle) */}
       <div
         className="fixed inset-0 pointer-events-none opacity-5 z-0"
         style={{
@@ -58,4 +53,4 @@ const UserLayout: React.FC = () => {
   );
 };
 
-export default UserLayout;
+export default GuestLayout;
