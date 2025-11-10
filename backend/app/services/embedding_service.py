@@ -1,7 +1,7 @@
 # app/services/embedding_service.py
 
 # ✅ BƯỚC 1: Import AsyncOpenAI thay vì OpenAI
-from openai import AsyncOpenAI
+
 from pinecone import Pinecone
 from typing import List, Dict, Any
 from ..config import settings

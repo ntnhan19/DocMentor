@@ -12,8 +12,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # OpenAI
-    OPENAI_API_KEY: str
+    GEMINI_API_KEY: str  # 👈 Thêm dòng này
     
     # Pinecone
     PINECONE_API_KEY: str

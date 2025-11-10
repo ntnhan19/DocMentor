@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, JSON, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, JSON, Boolean, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..database import Base
+
 
 class Document(Base):
     __tablename__ = "documents"
@@ -16,8 +17,7 @@ class Document(Base):
     processed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    
+
     # Relationships
     owner = relationship("User", back_populates="documents")
 
@@ -35,9 +35,12 @@ class Query(Base):
     sources = Column(JSON, default=[])  # List of {document_id, page, chunk_id}
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     execution_time = Column(Integer, nullable=True)  # milliseconds
-    
-    rating = Column(Integer, nullable=True)
+
+    # ✅ Thêm mới
+    rating = Column(Float, nullable=True, default=None)
+
+    # Relationship
     user = relationship("User", back_populates="queries")
 
     def __repr__(self):
-        return f"<Query(id={self.id}, user_id={self.user_id})>"
+        return f"<Query(id={self.id}, user_id={self.user_id}, rating={self.rating})>"

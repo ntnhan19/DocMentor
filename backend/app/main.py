@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from .config import settings
-from .routers import auth, documents
+from .routers import auth, documents, query
 
 app = FastAPI(
     title="DocMentor API",
@@ -11,9 +11,6 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
-app.include_router(auth.router)
-app.include_router(documents.router)
-app.include_router(query.router)
 
 # CORS
 app.add_middleware(
@@ -27,6 +24,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router) 
 app.include_router(documents.router)
+app.include_router(query.router)
 
 @app.get("/")
 def read_root():
