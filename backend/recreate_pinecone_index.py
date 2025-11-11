@@ -16,7 +16,7 @@ if index_name in pc.list_indexes().names():
 print(f"🔨 Creating new index '{index_name}' with 384 dimensions...")
 pc.create_index(
     name=index_name,
-    dimension=384,  # ✅ Changed from 1536 to 384
+    dimension=384,  
     metric='cosine',
     spec=ServerlessSpec(
         cloud='aws',
