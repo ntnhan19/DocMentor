@@ -18,9 +18,8 @@ google-generativeai==0.3.2
 
 # Embeddings (Local - Free)
 sentence-transformers==2.2.2
-# Torch cho CPU nhẹ hơn trên Render
---extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.1.0+cpu
+# Torch - để sentence-transformers tự cài phiên bản phù hợp
+torch
 
 # Vector DB
 pinecone-client==3.0.0
