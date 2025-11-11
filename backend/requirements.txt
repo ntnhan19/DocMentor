@@ -17,7 +17,7 @@ passlib[bcrypt]==1.7.4
 google-generativeai==0.3.2 
 
 # Embeddings (Local - Free) - Optimized for Render
-sentence-transformers==2.2.2
+sentence-transformers==2.3.1
 
 # Vector DB - Downgrade to compatible version
 pinecone-client==2.2.4

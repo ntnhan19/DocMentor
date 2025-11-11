@@ -8,9 +8,9 @@ echo "🔄 Starting build process..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "📦 Downloading sentence-transformers model..."
-# Pre-download model to avoid cold start delays
-python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+# Comment out pre-download - model sẽ download lần đầu khi API start
+# echo "📦 Downloading sentence-transformers model..."
+# python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
 echo "📁 Creating uploads directory..."
 mkdir -p uploads
