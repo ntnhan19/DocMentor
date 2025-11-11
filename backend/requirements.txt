@@ -16,19 +16,21 @@ passlib[bcrypt]==1.7.4
 # AI/ML - GEMINI
 google-generativeai==0.3.2 
 
-# Embeddings (Local - Free)
+# Embeddings (Local - Free) - Optimized for Render
 sentence-transformers==2.2.2
-# Torch - để sentence-transformers tự cài phiên bản phù hợp
-torch
+torch==2.0.1
 
-# Vector DB
-pinecone-client==3.0.0
+# Vector DB - Downgrade to compatible version
+pinecone-client==2.2.4
 
 # Document Processing
 PyPDF2==3.0.1
 python-docx==1.1.0
 pdfplumber==0.10.3
-langchain==0.1.0
+
+# Langchain
+langchain-core==0.1.52
+langchain-community==0.0.38
 
 # Utilities
 pydantic==2.5.0
