@@ -19,7 +19,6 @@ from ..models.document import Document
 router = APIRouter(prefix="/documents", tags=["Documents"])
 logger = logging.getLogger(__name__)
 
-# ✅ FIX: Async background task với proper error handling
 async def process_document_background(document_id: int, file_path: str):
     """
     Background task to process document

@@ -18,7 +18,9 @@ google-generativeai==0.3.2
 
 # Embeddings (Local - Free)
 sentence-transformers==2.2.2
-torch
+# Torch cho CPU nhẹ hơn trên Render
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.1.0+cpu
 
 # Vector DB
 pinecone-client==3.0.0
@@ -32,3 +34,6 @@ langchain==0.1.0
 # Utilities
 pydantic==2.5.0
 pydantic-settings==2.1.0
+
+# Server
+gunicorn==21.2.0

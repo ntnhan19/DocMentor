@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from .config import settings
 from .routers import auth, documents, query
+import os
 
 app = FastAPI(
     title="DocMentor API",
@@ -12,10 +13,22 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS
+# CORS - Thêm domain production
+allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+]
+
+# Nếu có FRONTEND_URL từ environment variables (khi deploy)
+if os.getenv("FRONTEND_URL"):
+    allowed_origins.append(os.getenv("FRONTEND_URL"))
+
+# Cho phép tất cả origins khi test (có thể tắt sau)
+allowed_origins.append("*")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,4 +50,4 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "database": "connected"}
+    return {"status": "healthy", "database": "connected", "python_version": os.sys.version}
