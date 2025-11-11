@@ -22,7 +22,7 @@ sentence-transformers==2.3.1
 huggingface-hub==0.19.4
 
 # Vector DB - Downgrade to compatible version
-pinecone-client==2.2.4
+pinecone-client==3.0.0
 
 # Document Processing
 PyPDF2==3.0.1
