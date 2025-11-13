@@ -6,22 +6,69 @@ from ..config import settings
 logger = logging.getLogger(__name__)
 
 class GeminiService:
-    """
-    Service for interacting with Google Gemini AI
-    Features:
-    - Text generation (for RAG answers)
-    - Embeddings (if needed later)
-    - Structured output
-    """
+    """Service for Google Gemini AI"""
     
     def __init__(self):
-        # Configure Gemini
         genai.configure(api_key=settings.GEMINI_API_KEY)
+        self.chat_model = genai.GenerativeModel('models/gemini-2.5-flash')
         
-        # Initialize models
-        self.chat_model = genai.GenerativeModel('gemini-2.5-flash')
+        # ✅ Configure safety settings (less strict)
+        self.safety_settings = {
+            'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
+            'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
+            'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
+            'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE',
+        }
         
-        logger.info("✅ Gemini service initialized")
+        logger.info("✅ Gemini 2.5 Flash initialized")
+    
+    def _safe_get_text(self, response) -> str:
+        """
+        Safely extract text from Gemini response
+        Handle cases where response is blocked or empty
+        """
+        try:
+            # Check if response has text
+            if hasattr(response, 'text') and response.text:
+                return response.text.strip()
+            
+            # Check candidates
+            if hasattr(response, 'candidates') and response.candidates:
+                candidate = response.candidates[0]
+                
+                # Check finish reason
+                if hasattr(candidate, 'finish_reason'):
+                    finish_reason = candidate.finish_reason
+                    
+                    # 0 = FINISH_REASON_UNSPECIFIED
+                    # 1 = STOP (success)
+                    # 2 = MAX_TOKENS
+                    # 3 = SAFETY
+                    # 4 = RECITATION
+                    # 5 = OTHER
+                    
+                    if finish_reason == 3:  # SAFETY
+                        logger.warning("⚠️ Response blocked by safety filter")
+                        return "⚠️ Response blocked by safety filter. Please try rephrasing."
+                    elif finish_reason == 2:  # MAX_TOKENS
+                        logger.warning("⚠️ Response truncated (max tokens)")
+                        # Try to get partial text
+                        if hasattr(candidate.content, 'parts') and candidate.content.parts:
+                            return candidate.content.parts[0].text
+                        return "⚠️ Response too long. Please try with shorter content."
+                
+                # Try to get content parts
+                if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                    if candidate.content.parts:
+                        return candidate.content.parts[0].text
+            
+            # If nothing works
+            logger.error("❌ No valid text in response")
+            return ""
+            
+        except Exception as e:
+            logger.error(f"❌ Error extracting text: {str(e)}")
+            return ""
     
     async def generate_answer(
         self, 
@@ -29,118 +76,123 @@ class GeminiService:
         context: str,
         system_instruction: str = None
     ) -> str:
-        """
-        Generate answer using Gemini based on context
-        
-        Args:
-            query: User's question
-            context: Retrieved context from documents
-            system_instruction: Optional system instructions
-        
-        Returns:
-            Generated answer
-        """
+        """Generate answer using Gemini"""
         try:
-            # Build prompt
-            if system_instruction:
-                prompt = f"""{system_instruction}
+            prompt = f"""Bạn là trợ giảng AI. Trả lời dựa trên context.
 
-CONTEXT (Trích từ tài liệu):
-{context}
+CONTEXT:
+{context[:8000]}
 
-QUESTION:
-{query}
+CÂU HỎI: {query}
 
-ANSWER (Trả lời bằng tiếng Việt, dựa trên context trên):"""
-            else:
-                prompt = f"""Bạn là một trợ giảng thông minh. Nhiệm vụ của bạn là trả lời câu hỏi của sinh viên dựa HOÀN TOÀN trên nội dung được cung cấp.
+TRẢ LỜI (ngắn gọn):"""
 
-QUY TẮC:
-1. Chỉ trả lời dựa trên CONTEXT bên dưới
-2. Trả lời bằng tiếng Việt rõ ràng, dễ hiểu
-3. Trích dẫn nguồn khi cần: [Nguồn: tên tài liệu]
-4. Nếu không tìm thấy thông tin, nói rõ "Tôi không tìm thấy thông tin về..."
-5. KHÔNG bịa đặt thông tin không có trong context
-
-CONTEXT (Trích từ tài liệu):
-{context}
-
-QUESTION:
-{query}
-
-ANSWER (Trả lời ngắn gọn, súc tích):"""
-
-            # Generate response
-            logger.info("🤖 Generating answer with Gemini...")
-            response = self.chat_model.generate_content(prompt)
+            response = self.chat_model.generate_content(
+                prompt,
+                safety_settings=self.safety_settings,
+                generation_config={
+                    'temperature': 0.3,
+                    'max_output_tokens': 1024,
+                }
+            )
             
-            answer = response.text.strip()
-            logger.info(f"✅ Answer generated: {len(answer)} characters")
-            
-            return answer
+            answer = self._safe_get_text(response)
+            return answer if answer else "Không thể tạo câu trả lời. Vui lòng thử lại."
             
         except Exception as e:
-            logger.error(f"❌ Error generating answer: {str(e)}")
-            raise
+            logger.error(f"❌ Error: {str(e)}")
+            return f"Lỗi: {str(e)[:100]}"
     
     async def generate_summary(self, text: str, length: str = "medium") -> str:
-        """
-        Generate summary of document
-        
-        Args:
-            text: Document text
-            length: "short", "medium", or "long"
-        
-        Returns:
-            Summary text
-        """
+        """Generate summary"""
         try:
-            length_instructions = {
+            length_map = {
                 "short": "5 câu ngắn gọn",
-                "medium": "1-2 đoạn văn",
-                "long": "chi tiết theo từng phần"
+                "medium": "1-2 đoạn văn (~150 từ)",
+                "long": "3-4 đoạn văn (~300 từ)"  # ✅ Reduce from 500 to 300
             }
             
-            prompt = f"""Tóm tắt nội dung sau bằng tiếng Việt, độ dài: {length_instructions.get(length, "1-2 đoạn văn")}
+            # ✅ Limit text length based on summary type
+            text_limits = {
+                "short": 8000,
+                "medium": 10000,
+                "long": 12000
+            }
+            
+            text_limit = text_limits.get(length, 10000)
+            
+            prompt = f"""Tóm tắt nội dung sau ({length_map.get(length, "1-2 đoạn văn")}):
 
 NỘI DUNG:
-{text[:10000]}  # Limit to first 10K chars
+{text[:text_limit]}
 
-TÓM TẮT:"""
+TÓM TẮT (chỉ tóm tắt, không thêm nhận xét):"""
 
-            response = self.chat_model.generate_content(prompt)
-            return response.text.strip()
+            response = self.chat_model.generate_content(
+                prompt,
+                safety_settings=self.safety_settings,
+                generation_config={
+                    'temperature': 0.4,
+                    'max_output_tokens': 2048,
+                }
+            )
+            
+            summary = self._safe_get_text(response)
+            return summary if summary else "Không thể tạo tóm tắt. Vui lòng thử lại."
             
         except Exception as e:
-            logger.error(f"❌ Error generating summary: {str(e)}")
-            raise
+            logger.error(f"❌ Error: {str(e)}")
+            return "Không thể tạo tóm tắt. Vui lòng thử lại."
     
-    async def extract_key_concepts(self, text: str) -> List[str]:
-        """
-        Extract key concepts from text
-        
-        Args:
-            text: Document text
-            
-        Returns:
-            List of key concepts
-        """
+    async def extract_key_concepts(self, text: str, max_concepts: int = 10) -> List[str]:
+        """Extract key concepts"""
         try:
-            prompt = f"""Trích xuất các khái niệm chính từ văn bản sau. Chỉ liệt kê các thuật ngữ quan trọng, mỗi thuật ngữ trên một dòng.
+            prompt = f"""Liệt kê {max_concepts} khái niệm quan trọng từ văn bản.
+
+Yêu cầu:
+- Mỗi dòng 1 khái niệm
+- Chỉ tên khái niệm, không giải thích
+- Không đánh số, không dấu gạch đầu dòng
 
 VĂN BẢN:
 {text[:8000]}
 
-KHÁI NIỆM CHÍNH (mỗi dòng một khái niệm):"""
+DANH SÁCH:"""
 
-            response = self.chat_model.generate_content(prompt)
-            concepts = [line.strip() for line in response.text.split('\n') if line.strip()]
+            response = self.chat_model.generate_content(
+                prompt,
+                safety_settings=self.safety_settings,
+                generation_config={
+                    'temperature': 0.2,
+                    'max_output_tokens': 512,
+                }
+            )
             
-            return concepts[:15]  # Return top 15
+            result_text = self._safe_get_text(response)
+            
+            if not result_text:
+                logger.warning("⚠️ No concepts extracted")
+                return []
+            
+            # Parse concepts
+            concepts = []
+            for line in result_text.split('\n'):
+                # Clean line
+                clean = line.strip()
+                # Remove common prefixes
+                clean = clean.lstrip('•-*0123456789. ')
+                # Remove quotes
+                clean = clean.strip('"\'')
+                
+                if clean and len(clean) > 2 and len(clean) < 100:
+                    concepts.append(clean)
+            
+            logger.info(f"✅ Extracted {len(concepts)} concepts")
+            return concepts[:max_concepts]
             
         except Exception as e:
-            logger.error(f"❌ Error extracting concepts: {str(e)}")
-            raise
+            logger.error(f"❌ Error: {str(e)}")
+            return []
     
     async def generate_quiz(
         self, 
@@ -148,54 +200,80 @@ KHÁI NIỆM CHÍNH (mỗi dòng một khái niệm):"""
         num_questions: int = 5,
         difficulty: str = "medium"
     ) -> List[Dict[str, Any]]:
-        """
-        Generate quiz questions from text
-        
-        Args:
-            text: Document text
-            num_questions: Number of questions to generate
-            difficulty: "easy", "medium", or "hard"
-            
-        Returns:
-            List of quiz questions with options and answers
-        """
+        """Generate quiz questions"""
         try:
-            prompt = f"""Tạo {num_questions} câu hỏi trắc nghiệm (multiple choice) từ nội dung sau, độ khó: {difficulty}.
+            prompt = f"""Tạo CHÍNH XÁC {num_questions} câu hỏi trắc nghiệm.
 
 YÊU CẦU:
-- Mỗi câu hỏi có 4 đáp án (A, B, C, D)
-- Chỉ có 1 đáp án đúng
-- Format JSON như sau:
-[
-  {{
-    "question": "Câu hỏi ở đây?",
-    "options": ["A. Đáp án 1", "B. Đáp án 2", "C. Đáp án 3", "D. Đáp án 4"],
-    "correct": "A",
-    "explanation": "Giải thích ngắn gọn"
-  }}
-]
+- Tạo đúng {num_questions} câu
+- Mỗi câu có 4 đáp án (A, B, C, D)
+- Chỉ 1 đáp án đúng
+- Format JSON
 
 NỘI DUNG:
-{text[:8000]}
+{text[:7000]}
 
-JSON OUTPUT:"""
+JSON (chỉ JSON, không text khác):
+[
+  {{
+    "question": "...",
+    "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
+    "correct": "A",
+    "explanation": "..."
+  }}
+]"""
 
-            response = self.chat_model.generate_content(prompt)
+            response = self.chat_model.generate_content(
+                prompt,
+                safety_settings=self.safety_settings,
+                generation_config={
+                    'temperature': 0.5,
+                    'max_output_tokens': 2048,
+                }
+            )
             
-            # Parse JSON from response (basic parsing)
+            result_text = self._safe_get_text(response)
+            
+            if not result_text:
+                logger.warning("⚠️ No quiz generated")
+                return []
+            
+            # Parse JSON
             import json
             import re
             
-            # Extract JSON from markdown code blocks if present
-            json_text = response.text.strip()
+            # Extract JSON
+            json_text = result_text
             if "```json" in json_text:
-                json_text = re.search(r'```json\n(.*?)\n```', json_text, re.DOTALL).group(1)
+                match = re.search(r'```json\s*(.*?)\s*```', json_text, re.DOTALL)
+                if match:
+                    json_text = match.group(1)
             elif "```" in json_text:
-                json_text = re.search(r'```\n(.*?)\n```', json_text, re.DOTALL).group(1)
+                match = re.search(r'```\s*(.*?)\s*```', json_text, re.DOTALL)
+                if match:
+                    json_text = match.group(1)
+            
+            # Try to find JSON array in text
+            if not json_text.strip().startswith('['):
+                match = re.search(r'(\[.*\])', json_text, re.DOTALL)
+                if match:
+                    json_text = match.group(1)
             
             questions = json.loads(json_text)
-            return questions
             
+            # Validate questions
+            valid_questions = []
+            for q in questions:
+                if all(key in q for key in ['question', 'options', 'correct', 'explanation']):
+                    valid_questions.append(q)
+            
+            logger.info(f"✅ Generated {len(valid_questions)} valid questions")
+            return valid_questions[:num_questions]
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ JSON parse error: {str(e)}")
+            logger.error(f"Response: {result_text[:500]}")
+            return []
         except Exception as e:
-            logger.error(f"❌ Error generating quiz: {str(e)}")
-            raise
+            logger.error(f"❌ Error: {str(e)}")
+            return []
