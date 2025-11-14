@@ -10,8 +10,9 @@ from ..database import get_db
 from ..models.user import User
 from ..schemas.user import TokenData
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing - THAY ĐỔI TỪ bcrypt SANG argon2
+pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
+# argon2 ưu tiên, bcrypt làm fallback cho password cũ
 
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -21,7 +22,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
-    """Hash a password"""
+    """Hash a password using argon2"""
     return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
