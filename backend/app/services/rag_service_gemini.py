@@ -5,7 +5,7 @@ import logging
 from ..config import settings
 from ..models.document import Document, Query as QueryModel
 from ..models.user import User
-from .embedding_service_local import EmbeddingServiceLocal
+from .embedding_service_gemini import EmbeddingServiceGemini
 from .gemini_service import GeminiService
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class RAGServiceGemini:
     """
     
     def __init__(self):
-        self.embedding_service = EmbeddingServiceLocal()
+        self.embedding_service = EmbeddingServiceGemini()
         self.gemini_service = GeminiService()
     
     async def query_documents(

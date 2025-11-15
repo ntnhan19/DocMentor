@@ -5,14 +5,14 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from typing import List, Dict, Any
 import logging
 from ..models.document import Document
-from .embedding_service_local import EmbeddingServiceLocal
+from .embedding_service_gemini import EmbeddingServiceGemini
 # ✅ Setup logging properly
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class DocumentProcessor:
     def __init__(self):
-        self.embedding_service = EmbeddingServiceLocal()
+        self.embedding_service = EmbeddingServiceGemini()
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=100,
