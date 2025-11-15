@@ -12,7 +12,7 @@ class Document(Base):
     file_path = Column(String, nullable=False)
     file_type = Column(String, nullable=False)  # pdf, docx, txt
     file_size = Column(Integer, nullable=False)
-    metadata_ = Column("metadata", JSON, nullable=True)
+    metadata_ = Column("doc_metadata", JSON, nullable=True)
     processed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
