@@ -1,31 +1,39 @@
 // src/features/chat/components/ChatContainer.tsx
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { FiPlus } from "react-icons/fi";
 import { ChatMessage, Conversation } from "@/types/chat.types";
 import { chatService } from "@/services/chat/chatService";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { SuggestedQueries } from "./SuggestedQuestions";
+import Button from "@/components/common/Button";
 import { useAuth } from "@/app/providers/AuthProvider";
-import Hero from "@/features/homepage/components/Hero";
+import HeroChat from "@/features/chat/components/HeroChat";
 
 interface ChatContainerProps {
   conversationId: string | null;
-  sessionId?: string | null;
-  onNewConversation?: (conversation: Conversation) => void;
-  onCreateConversationFromHero?: (
+  sessionId: string | null;
+  initialFile?: File | null;
+  selectedDocuments?: Array<{ id: string; title: string }>;
+  onOpenDocumentModal?: () => void;
+  onRemoveDocument?: (docId: string) => void;
+  onCreateConversationFromHeroChat?: (
     conversationId: string,
     initialMessage: string
   ) => void;
-  initialFile?: File | null;
+  onNewConversation?: (conversation: Conversation) => void;
 }
 
 export const ChatContainer: React.FC<ChatContainerProps> = ({
   conversationId,
   sessionId: propSessionId,
   onNewConversation,
-  onCreateConversationFromHero,
+  onCreateConversationFromHeroChat,
   initialFile,
+  selectedDocuments = [],
+  onOpenDocumentModal,
+  onRemoveDocument,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [suggestedQueries, setSuggestedQueries] = useState<string[]>([]);
@@ -105,8 +113,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
           });
           const newConvId = newConversation.id;
 
-          if (onCreateConversationFromHero) {
-            onCreateConversationFromHero(newConvId, messageText);
+          if (onCreateConversationFromHeroChat) {
+            onCreateConversationFromHeroChat(newConvId, messageText);
           } else if (onNewConversation) {
             onNewConversation(newConversation);
           }
@@ -213,9 +221,49 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
   return (
     <div className="flex flex-col h-full relative">
-      {/* Nếu chưa có tin nhắn, hiển thị Hero */}
+      {/* ✨ THÊM: Header với Selected Documents */}
+      {selectedDocuments.length > 0 && (
+        <div className="border-b border-primary/20 bg-accent/40 backdrop-blur-sm p-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-text-muted">
+                Đang chat với{" "}
+                <span className="font-bold text-primary">
+                  {selectedDocuments.length}
+                </span>{" "}
+                tài liệu
+              </p>
+              <Button
+                onClick={onOpenDocumentModal}
+                className="text-sm px-3 py-1.5 bg-primary/20 border border-primary/30 rounded-lg text-primary hover:bg-primary/30 transition-colors flex items-center gap-2"
+              >
+                <FiPlus className="w-4 h-4" />
+                Thêm tài liệu
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {selectedDocuments.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="bg-accent/80 border border-primary/30 rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm text-white"
+                >
+                  <span className="truncate max-w-xs">{doc.title}</span>
+                  <button
+                    onClick={() => onRemoveDocument?.(doc.id)}
+                    className="text-text-muted hover:text-white transition-colors font-bold"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Nếu chưa có tin nhắn, hiển thị HeroChat */}
       {messages.length === 0 ? (
-        <Hero onStartChat={handleSendMessage} />
+        <HeroChat onStartChat={handleSendMessage} />
       ) : (
         <>
           <div className="flex-1 overflow-y-auto">
@@ -231,7 +279,11 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
               </div>
             )}
           </div>
-          <ChatInput onSendMessage={handleSendMessage} isLoading={isReplying} />
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            isLoading={isReplying}
+            onOpenDocumentModal={onOpenDocumentModal}
+          />
         </>
       )}
     </div>

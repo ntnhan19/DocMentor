@@ -19,7 +19,7 @@ export default {
         "bounce-slow": "bounce 2s infinite",
         // Thêm hiệu ứng float mới
         float: "float 4s ease-in-out infinite",
-        // Thêm gradient animation cho Hero
+        // Thêm gradient animation cho HeroChat
         gradient: "gradient 3s linear infinite",
       },
       keyframes: {

@@ -10,6 +10,7 @@ import {
 import { useAuth } from "@/app/providers/AuthProvider";
 import { ChatContainer } from "@/features/chat/components/ChatContainer";
 import { ChatSidebar } from "@/features/chat/components/ChatSidebar";
+import { DocumentSelectionModal } from "@/features/chat/components/DocumentSelectionModal";
 import { Conversation } from "@/types/chat.types";
 import { chatService } from "@/services/chat/chatService";
 
@@ -21,6 +22,12 @@ const ChatPage: React.FC = () => {
 
   // ✨ THÊM: State cho file từ DocumentsPage
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  // ✨ THÊM: State cho Document Selection Modal
+  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+  const [selectedDocuments, setSelectedDocuments] = useState<
+    Array<{ id: string; title: string }>
+  >([]);
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -43,6 +50,40 @@ const ChatPage: React.FC = () => {
       setPendingFile(state.initialFile);
     }
   }, []);
+
+  // ✨ THÊM: useEffect để check localStorage từ DocumentsPage
+  useEffect(() => {
+    const savedDocIds = localStorage.getItem("selectedDocIds");
+    if (savedDocIds && isLoggedIn) {
+      try {
+        const docIds = JSON.parse(savedDocIds);
+        // Tải và set documents
+        loadDocumentsFromIds(docIds);
+        localStorage.removeItem("selectedDocIds");
+      } catch (error) {
+        console.error("Error loading saved doc IDs:", error);
+      }
+    }
+  }, [isLoggedIn]);
+
+  // ✨ THÊM: Function để load documents từ IDs
+  const loadDocumentsFromIds = async (docIds: string[]) => {
+    try {
+      const docs = await Promise.all(
+        docIds.map((id) =>
+          fetch(`/api/documents/${id}`).then((res) => res.json())
+        )
+      );
+      setSelectedDocuments(
+        docs.map((doc) => ({
+          id: doc.id,
+          title: doc.title,
+        }))
+      );
+    } catch (error) {
+      console.error("Error loading documents:", error);
+    }
+  };
 
   // ✨ THAY ĐỔI: Tách useEffect cho docIds xử lý
   useEffect(() => {
@@ -72,7 +113,10 @@ const ChatPage: React.FC = () => {
     try {
       console.log("Creating conversation with docs:", docIds);
 
-      const newConv = await chatService.createConversationWithContext(docIds);
+      // Ensure we pass string[] to the chat service (it expects strings)
+      const stringDocIds = docIds.map((id) => String(id));
+      const newConv =
+        await chatService.createConversationWithContext(stringDocIds);
       setConversations((prev) => [newConv, ...prev]);
       setActiveConversationId(newConv.id);
 
@@ -120,12 +164,12 @@ const ChatPage: React.FC = () => {
     setActiveConversationId(id);
   };
 
-  const handleCreateConversationFromHero = (
+  const handleCreateConversationFromHeroChat = (
     conversationId: string,
     initialMessage: string
   ) => {
     console.log(
-      "✓ handleCreateConversationFromHero called:",
+      "✓ handleCreateConversationFromHeroChat called:",
       conversationId,
       initialMessage
     );
@@ -151,6 +195,19 @@ const ChatPage: React.FC = () => {
 
     setActiveConversationId(conversationId);
     console.log("✓ Active conversation set to:", conversationId);
+  };
+
+  // ✨ THÊM: Handler cho Document Selection
+  const handleDocumentsSelected = (
+    documents: Array<{ id: string; title: string }>
+  ) => {
+    setSelectedDocuments(documents);
+    setIsDocumentModalOpen(false);
+  };
+
+  // ✨ THÊM: Handler để remove document
+  const handleRemoveDocument = (docId: string) => {
+    setSelectedDocuments((prev) => prev.filter((d) => d.id !== docId));
   };
 
   return (
@@ -197,14 +254,30 @@ const ChatPage: React.FC = () => {
             }
             sessionId={!isLoggedIn || isGuestChat ? guestSessionId : null}
             initialFile={pendingFile} // ✨ DÙNG: pendingFile
-            onCreateConversationFromHero={
+            selectedDocuments={selectedDocuments}
+            onOpenDocumentModal={() => setIsDocumentModalOpen(true)}
+            onRemoveDocument={handleRemoveDocument}
+            onCreateConversationFromHeroChat={
               isLoggedIn && !isGuestChat
-                ? handleCreateConversationFromHero
+                ? handleCreateConversationFromHeroChat
                 : undefined
             }
           />
         </div>
       </main>
+
+      {/* ✨ THÊM: Document Selection Modal */}
+      {isLoggedIn && !isGuestChat && (
+        <DocumentSelectionModal
+          isOpen={isDocumentModalOpen}
+          onClose={() => {
+            if (selectedDocuments.length > 0) {
+              setIsDocumentModalOpen(false);
+            }
+          }}
+          onDocumentsSelected={handleDocumentsSelected}
+        />
+      )}
     </div>
   );
 };

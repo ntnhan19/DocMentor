@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import Button from "@/components/common/Button";
 
-interface HeroProps {
+interface HeroChatProps {
   onStartChat: (messageText: string, file?: File) => Promise<void>;
   initialFile?: File | null;
   initialMessage?: string;
 }
 
-const Hero: React.FC<HeroProps> = ({
+const HeroChat: React.FC<HeroChatProps> = ({
   onStartChat,
   initialFile,
   initialMessage,
@@ -306,4 +306,4 @@ const Hero: React.FC<HeroProps> = ({
   );
 };
 
-export default Hero;
+export default HeroChat;

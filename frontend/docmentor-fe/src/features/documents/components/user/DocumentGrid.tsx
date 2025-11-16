@@ -7,8 +7,6 @@ import { DocumentCard } from "@/features/documents/components/user/DocumentCard"
 interface DocumentGridProps {
   documents: Document[];
   onDelete: (id: string) => void;
-  selectedDocIds: string[];
-  onSelectionChange: (id: string) => void;
   editingId?: string | null;
   editingTitle?: string;
   onStartEdit?: (doc: Document) => void;
@@ -20,8 +18,6 @@ interface DocumentGridProps {
 export const DocumentGrid: React.FC<DocumentGridProps> = ({
   documents,
   onDelete,
-  selectedDocIds,
-  onSelectionChange,
   editingId,
   editingTitle,
   onStartEdit,
@@ -37,8 +33,8 @@ export const DocumentGrid: React.FC<DocumentGridProps> = ({
           document={doc}
           view="grid"
           onDelete={onDelete}
-          isSelected={selectedDocIds.includes(doc.id)}
-          onSelectionChange={onSelectionChange}
+          isSelected={false}
+          onSelectionChange={() => {}}
           editingId={editingId}
           editingTitle={editingTitle}
           onStartEdit={onStartEdit}

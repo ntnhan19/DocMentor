@@ -17,7 +17,10 @@ import DocumentDetailPage from "@/pages/user/DocumentDetailPage";
 import ChatPage from "@/pages/user/ChatPage";
 import ProfilePage from "@/pages/user/ProfilePage";
 import SettingsPage from "@/pages/user/SettingsPage";
-
+import AdminLayout from "@/components/layout/admin/AdminLayout";
+import AdminDashboardPage from "@/pages/admin/AdminDashboardPage";
+// import AdminDocumentsPage from "@/pages/admin/AdminDocumentsPage";
+// import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 const router = createBrowserRouter([
   // ✨ THAY ĐỔI: / route chuyển thành ChatPage cho guest
   {
@@ -78,7 +81,29 @@ const router = createBrowserRouter([
       },
     ],
   },
-
+  // ✅ THÊM PHẦN ADMIN MỚI VÀO ĐÂY
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/admin/dashboard" replace />,
+      },
+      {
+        path: "dashboard",
+        element: <AdminDashboardPage />,
+      },
+      // {
+      //   path: "documents",
+      //   element: <AdminDocumentsPage />,
+      // },
+      // {
+      //   path: "users",
+      //   element: <AdminUsersPage />,
+      // },
+    ],
+  },
   { path: "*", element: <NotFoundPage /> },
 ]);
 

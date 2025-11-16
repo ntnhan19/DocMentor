@@ -7,8 +7,6 @@ import { DocumentCard } from "@/features/documents/components/user/DocumentCard"
 interface DocumentListProps {
   documents: Document[];
   onDelete: (id: string) => void;
-  selectedDocIds: string[];
-  onSelectionChange: (id: string) => void;
   editingId?: string | null;
   editingTitle?: string;
   onStartEdit?: (doc: Document) => void;
@@ -20,8 +18,6 @@ interface DocumentListProps {
 export const DocumentList: React.FC<DocumentListProps> = ({
   documents,
   onDelete,
-  selectedDocIds,
-  onSelectionChange,
   editingId,
   editingTitle,
   onStartEdit,
@@ -37,8 +33,8 @@ export const DocumentList: React.FC<DocumentListProps> = ({
           document={doc}
           view="list"
           onDelete={onDelete}
-          isSelected={selectedDocIds.includes(doc.id)}
-          onSelectionChange={onSelectionChange}
+          isSelected={false}
+          onSelectionChange={() => {}}
           editingId={editingId}
           editingTitle={editingTitle}
           onStartEdit={onStartEdit}

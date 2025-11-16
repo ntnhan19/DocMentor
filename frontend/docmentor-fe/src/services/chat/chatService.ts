@@ -256,7 +256,7 @@ export const chatService = {
   createNewConversation: async (
     payload: CreateNewConversationPayload
   ): Promise<Conversation> => {
-    console.log("(MOCK) Tạo conversation mới từ Hero:", payload.title);
+    console.log("(MOCK) Tạo conversation mới từ HeroChat:", payload.title);
 
     if (USE_MOCK_MODE) {
       await new Promise((res) => setTimeout(res, 1000));

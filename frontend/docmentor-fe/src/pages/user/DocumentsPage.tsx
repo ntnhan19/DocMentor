@@ -1,7 +1,8 @@
-// src/pages/user/DocumentsPage.tsx
+// ============================================
+// DocumentsPage.tsx - UPDATED (Loại bỏ chức năng "Bắt đầu Chat")
+// ============================================
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { FiMessageSquare, FiEdit2, FiX } from "react-icons/fi";
+import { FiEdit2, FiX } from "react-icons/fi";
 
 import { documentService } from "@/services/document/documentService";
 import { Document } from "@/types/document.types";
@@ -40,17 +41,14 @@ const DocumentsPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<ExtendedFilters>({
     sortBy: "date_desc",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
-  const navigate = useNavigate();
 
   const DOCUMENTS_PER_PAGE = 10;
 
-  // ✨ 1. Hàm tải tài liệu
   const fetchDocuments = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -70,7 +68,6 @@ const DocumentsPage: React.FC = () => {
     }
   }, [currentPage, debouncedSearchQuery]);
 
-  // ✨ Lọc và sắp xếp tài liệu
   useEffect(() => {
     let result = [...documents];
 
@@ -99,31 +96,20 @@ const DocumentsPage: React.FC = () => {
     setFilteredDocuments(result);
   }, [documents, filters]);
 
-  // duplicate filter effect removed (logic is already handled above)
-
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments]);
 
-  // ✨ 3. Xử lý tìm kiếm
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
   };
 
-  // ✨ Xử lý thay đổi bộ lọc
-  /*const handleFilterChange = (newFilters: Partial<ExtendedFilters>) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
-    setCurrentPage(1);
-  };*/
-
-  // ✨ 4. Xử lý thay đổi bộ lọc
   const handleFilterChange = (newFilters: Partial<ExtendedFilters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
     setCurrentPage(1);
   };
 
-  // ✨ 5. Xử lý chỉnh sửa tên tài liệu
   const handleStartEdit = (doc: Document) => {
     setEditingId(doc.id);
     setEditingTitle(doc.title || "");
@@ -146,24 +132,22 @@ const DocumentsPage: React.FC = () => {
     } else {
       setEditingId(null);
     }
-    // duplicate handleFilterChange removed (function is declared earlier)
   };
 
-  // ✨ 6. Xử lý tải lên
   const handleUploadSuccess = () => {
     setIsUploadModalOpen(false);
     fetchDocuments();
   };
+
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingTitle("");
   };
-  // ✨ 7. Xử lý xóa tài liệu
+
   const handleDeleteDocument = async (id: string) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa tài liệu này không?")) {
       try {
         await documentService.deleteDocument(id);
-        setSelectedDocIds((prev) => prev.filter((docId) => docId !== id));
         setDocuments((prevDocuments) =>
           prevDocuments.filter((doc) => doc.id !== id)
         );
@@ -171,54 +155,6 @@ const DocumentsPage: React.FC = () => {
         console.error("Failed to delete document:", error);
         setError("Xóa tài liệu thất bại.");
       }
-    }
-  };
-
-  // ✨ 8. Xử lý chọn tài liệu
-  const handleSelectionChange = (docId: string) => {
-    setSelectedDocIds((prevSelectedIds) => {
-      if (prevSelectedIds.includes(docId)) {
-        return prevSelectedIds.filter((id) => id !== docId);
-      } else {
-        return [...prevSelectedIds, docId];
-      }
-    });
-  };
-
-  // ✨ 9. Xử lý bắt đầu chat
-  const handleStartChat = () => {
-    if (selectedDocIds.length === 0) {
-      alert("Vui lòng chọn ít nhất một tài liệu để bắt đầu trò chuyện.");
-      return;
-    }
-
-    const selectedDocuments = documents.filter((doc) =>
-      selectedDocIds.includes(doc.id)
-    );
-
-    if (selectedDocuments.length === 1) {
-      const doc = selectedDocuments[0];
-      const mockFile = new File(
-        ["Document content"],
-        doc.title || `${doc.id}.pdf`,
-        { type: "application/pdf" }
-      );
-
-      const queryParams = new URLSearchParams({
-        docIds: selectedDocIds.join(","),
-      }).toString();
-
-      navigate(`/user/chat?${queryParams}`, {
-        state: {
-          initialFile: mockFile,
-        },
-      });
-    } else {
-      const queryParams = new URLSearchParams({
-        docIds: selectedDocIds.join(","),
-      }).toString();
-
-      navigate(`/user/chat?${queryParams}`);
     }
   };
 
@@ -294,12 +230,10 @@ const DocumentsPage: React.FC = () => {
       <div className="mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
         <div className="bg-accent/60 backdrop-blur-sm rounded-xl p-4 border border-primary/20 shadow-lg">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* ✅ Thanh tìm kiếm bên trái */}
             <div className="flex-1 w-full">
               <DocumentSearch onSearch={handleSearch} />
             </div>
 
-            {/* ✅ Bộ lọc bên phải */}
             <div className="flex-shrink-0">
               <DocumentFilter onFilterChange={handleFilterChange} />
             </div>
@@ -330,8 +264,6 @@ const DocumentsPage: React.FC = () => {
               <DocumentGrid
                 documents={filteredDocuments}
                 onDelete={handleDeleteDocument}
-                selectedDocIds={selectedDocIds}
-                onSelectionChange={handleSelectionChange}
                 editingId={editingId}
                 editingTitle={editingTitle}
                 onStartEdit={handleStartEdit}
@@ -343,8 +275,6 @@ const DocumentsPage: React.FC = () => {
               <DocumentList
                 documents={filteredDocuments}
                 onDelete={handleDeleteDocument}
-                selectedDocIds={selectedDocIds}
-                onSelectionChange={handleSelectionChange}
                 editingId={editingId}
                 editingTitle={editingTitle}
                 onStartEdit={handleStartEdit}
@@ -364,28 +294,6 @@ const DocumentsPage: React.FC = () => {
           </>
         )}
       </div>
-
-      {/* Floating Action Bar */}
-      {selectedDocIds.length > 0 && (
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg p-4 z-20 animate-slide-up">
-          <div className="bg-accent/80 backdrop-blur-lg border border-primary/30 rounded-2xl shadow-2xl flex justify-between items-center p-4">
-            <p className="font-medium text-white">
-              Đã chọn{" "}
-              <span className="font-bold text-secondary">
-                {selectedDocIds.length}
-              </span>{" "}
-              tài liệu
-            </p>
-            <Button
-              onClick={handleStartChat}
-              className="bg-gradient-to-r from-primary to-secondary text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-primary/40 flex items-center gap-2 hover:scale-105 transition-transform"
-            >
-              <FiMessageSquare />
-              Bắt đầu Chat
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Upload Modal */}
       <DocumentUploadModal
