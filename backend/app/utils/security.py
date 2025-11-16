@@ -10,8 +10,9 @@ from ..database import get_db
 from ..models.user import User
 from ..schemas.user import TokenData
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing - THAY ĐỔI TỪ bcrypt SANG argon2
+pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
+# argon2 ưu tiên, bcrypt làm fallback cho password cũ
 
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -21,9 +22,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
-    """Hash a password"""
-    # Bcrypt chỉ hỗ trợ tối đa 72 bytes, nên cắt ngắn để tránh lỗi
-    password = password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
+    """Hash a password using argon2"""
     return pwd_context.hash(password)
 
 
