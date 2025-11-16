@@ -19,7 +19,7 @@ from ..services.rag_service_gemini import RAGServiceGemini
 from ..utils.security import get_current_user
 from ..models.user import User
 from ..models.document import Query as QueryModel
-from ..utils.cache import cache
+from app.schemas import query
 
 router = APIRouter(prefix="/query", tags=["Query & RAG"])
 
@@ -31,34 +31,44 @@ router = APIRouter(prefix="/query", tags=["Query & RAG"])
 async def query_documents(
     request: QueryRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user)
 ):
-    """
-    Query documents using natural language (Gemini).
-    Stores query result in DB via RAG Service (service handles persistence).
-    """
+    """Query tài liệu với AI (Gemini)"""
     rag_service = RAGServiceGemini()
+
+    # Gọi RAG service
     result = await rag_service.query_documents(
         db=db,
         user=current_user,
         query_text=request.query_text,
         document_ids=request.document_ids,
-        max_results=request.max_results,
+        max_results=request.max_results
     )
 
-    # Prepare response payload (match QueryResponse schema)
-    # Invalidate user's query stats & popular queries cache (new query changed stats)
-    try:
-        cache.delete(f"user_{current_user.id}_query_stats")
-        cache.delete(f"user_{current_user.id}_popular_queries")
-    except Exception:
-        pass
+    # Nếu RAG trả về kết quả KHÔNG có query_id → tức là không tìm thấy tài liệu
+    if "query_id" not in result:
+        return {
+            "query_id": None,
+            "query_text": request.query_text,
+            "answer": result["answer"],
+            "sources": result["sources"],
+            "confidence_score": result["confidence_score"],
+            "processing_time_ms": result["processing_time_ms"],
+            "created_at": datetime.utcnow()
+        }
 
+    # Nếu OK → trả về đủ thông tin
     return {
-        **result,
+        "query_id": result["query_id"],
         "query_text": request.query_text,
-        "created_at": datetime.utcnow(),
+        "answer": result["answer"],
+        "sources": result["sources"],
+        "confidence_score": result["confidence_score"],
+        "processing_time_ms": result["processing_time_ms"],
+        "created_at": datetime.utcnow()
     }
+
+
 
 
 # -------------------------------
@@ -239,20 +249,27 @@ def submit_feedback(
 ):
     """
     Submit rating/feedback for a query.
-    We persist feedback inside the JSON `sources` field safely:
-    - If `sources` is a list -> wrap into {"sources": [...], "feedback": {...}}
-    - If `sources` is dict -> set/update key "feedback"
-    This avoids touching a DB column named `feedback` that may not exist.
+    Feedback is stored safely inside QueryModel.sources (JSON).
+    - Prevent multiple feedback submissions
+    - Normalize JSON structure
     """
-    query = (
-        db.query(QueryModel)
-        .filter(QueryModel.id == feedback.query_id, QueryModel.user_id == current_user.id)
-        .first()
-    )
+    query = db.query(QueryModel).filter(QueryModel.id == feedback.query_id).first()
     if not query:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Query not found")
+        raise HTTPException(status_code=404, detail="Query not found")
 
-    # Build feedback payload
+# 2. Kiểm tra quyền sở hữu (403)
+    if query.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Forbidden: not your query")
+
+    # ---- Prevent double feedback ----
+    existing = query.sources
+    if isinstance(existing, dict) and existing.get("feedback"):
+        raise HTTPException(status_code=400, detail="Already submitted feedback")
+
+    # ---- Validate rating server-side ----
+    if not (1 <= feedback.rating <= 5):
+        raise HTTPException(status_code=422, detail="Rating must be from 1 to 5")
+
     fb_payload = {
         "rating": int(feedback.rating),
         "text": feedback.feedback_text.strip() if feedback.feedback_text else None,
@@ -262,36 +279,62 @@ def submit_feedback(
 
     current_sources = query.sources
 
-    # If no sources yet -> set to dict with feedback
+    # ---- Normalize sources ----
     if not current_sources:
         new_sources = {"sources": [], "feedback": fb_payload}
+
     elif isinstance(current_sources, list):
-        # convert to dict wrapper to hold both sources and feedback
         new_sources = {"sources": current_sources, "feedback": fb_payload}
+
     elif isinstance(current_sources, dict):
-        # safe update/replace feedback key
-        new_sources = dict(current_sources)  # shallow copy
-        new_sources["feedback"] = fb_payload
+        new_sources = {
+            "sources": current_sources.get("sources", []),
+            "feedback": fb_payload
+        }
     else:
-        # unknown shape -> replace with wrapper
         new_sources = {"sources": [], "feedback": fb_payload}
 
-    # Save back
+    # ---- Save ----
     query.sources = new_sources
 
-    # Optionally also set numeric rating column if exists (best-effort)
-    try:
-        # If QueryModel has attribute 'rating' (column), assign
-        if hasattr(query, "rating"):
-            query.rating = int(feedback.rating)
-    except Exception:
-        # ignore if DB doesn't support or column missing
-        pass
+    # Optional: write rating if column exists
+    if hasattr(query, "rating"):
+        try:
+            query.rating = feedback.rating
+        except:
+            pass
 
-    db.add(query)
     db.commit()
+    db.refresh(query)
 
-    return {"message": "Feedback submitted successfully"}
+    return {
+        "query_id": query.id,
+        "feedback": fb_payload
+    }
+
+@router.get("/{query_id}/feedback")
+def get_feedback(
+    query_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # 1. Query có tồn tại?
+    query = db.query(QueryModel).filter(QueryModel.id == query_id).first()
+    if not query:
+        raise HTTPException(status_code=404, detail="Query not found")
+
+    # 2. Có phải của user không?
+    if query.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Forbidden: not your query")
+
+    sources = query.sources
+
+    # 3. Nếu không có feedback → trả null
+    if not sources or not isinstance(sources, dict) or "feedback" not in sources:
+        return None
+
+    return sources["feedback"]
+
 
 
 # -------------------------------
@@ -334,12 +377,6 @@ def get_query_stats(
       - avg_rating (try numeric column first, fallback to sources.feedback)
       - activity_last_7_days (list of {date, count})
     """
-    # Try cache first (TTL 60 seconds)
-    cache_key = f"user_{current_user.id}_query_stats"
-    cached = cache.get(cache_key)
-    if cached:
-        return cached
-
     # total
     total_q = db.query(func.count(QueryModel.id)).filter(QueryModel.user_id == current_user.id).scalar() or 0
 
@@ -394,12 +431,4 @@ def get_query_stats(
         t = (now.date() - timedelta(days=6 - i))
         activity.append({"date": t.isoformat(), "count": int(daily_map.get(t, 0))})
 
-    payload = {"total_queries": int(total_q), "avg_rating": float(avg_rating), "activity_last_7_days": activity}
-
-    # store stats in cache for 60 seconds
-    try:
-        cache.set(cache_key, payload, ttl_seconds=60)
-    except Exception:
-        pass
-
-    return payload
+    return {"total_queries": int(total_q), "avg_rating": float(avg_rating), "activity_last_7_days": activity}

@@ -19,7 +19,6 @@ class Document(Base):
 
     # 🟢 CHỌN MỘT TRONG HAI — nhưng để chuẩn thì dùng doc_metadata
     metadata_ = Column("doc_metadata", JSON, nullable=True)
-
     processed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -42,6 +41,7 @@ class Query(Base):
 
     query_text = Column(Text, nullable=False)
     response_text = Column(Text, nullable=True)
+    normalized_query = Column(String, index=True)   # text không dấu
 
     # 🟢 nơi sẽ lưu sources + feedback chung
     # ví dụ:
@@ -55,7 +55,8 @@ class Query(Base):
     execution_time = Column(Integer, nullable=True)
 
     # 🟢 rating = optional (nếu có bạn sẽ dùng)
-    rating = Column(Float, nullable=True, default=None)
+    feedback = Column(JSON, nullable=True)
+    rating = Column(Float, nullable=True)
 
     # ❌ KHÔNG dùng cột feedback — vì nó gây crash Render khi schema khác
     # feedback = Column(JSON, nullable=True)

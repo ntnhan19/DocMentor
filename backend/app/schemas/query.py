@@ -4,6 +4,7 @@ from typing import List, Dict, Any, Optional
 import re
 
 
+
 # ============================================================
 # REQUEST SCHEMAS
 # ============================================================
@@ -31,8 +32,10 @@ class QueryFeedbackBase(BaseModel):
         return v
 
 
-class QueryFeedbackCreate(QueryFeedbackBase):
+class QueryFeedbackCreate(BaseModel):
     query_id: int
+    rating: int = Field(..., ge=1, le=5)
+    feedback_text: Optional[str] = None
 
 
 class QueryFeedback(QueryFeedbackBase):
@@ -58,7 +61,7 @@ class SourceSchema(BaseModel):
 
 
 class QueryResponse(BaseModel):
-    query_id: int
+    query_id: Optional[int] = None 
     query_text: str
     answer: str
     sources: List[SourceSchema]
