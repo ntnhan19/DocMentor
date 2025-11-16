@@ -15,6 +15,7 @@ from ..services.document_processor import DocumentProcessor
 from ..utils.security import get_current_user
 from ..models.user import User
 from ..models.document import Document
+from ..utils.cache import cache
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 logger = logging.getLogger(__name__)
@@ -77,6 +78,12 @@ async def upload_document(
         document.id,
         document.file_path
     )
+    # Invalidate document list cache for this user
+    try:
+        cache_key = f"user_{current_user.id}_documents"
+        cache.delete(cache_key)
+    except Exception:
+        logger.debug("Failed to delete documents cache", exc_info=True)
     
     return DocumentUploadResponse(
         message="Document uploaded successfully. Processing in background...",
@@ -92,10 +99,23 @@ def get_documents(
     current_user: User = Depends(get_current_user)
 ):
     """Get all documents for current user"""
+    # Try cache first
+    cache_key = f"user_{current_user.id}_documents"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
     documents = DocumentService.get_user_documents(db, current_user, skip, limit, search)
     total = db.query(Document).filter(Document.user_id == current_user.id).count()
-    
-    return DocumentList(total=total, documents=documents)
+    result = DocumentList(total=total, documents=documents)
+
+    # Store in cache for 2 minutes
+    try:
+        cache.set(cache_key, result, ttl_seconds=120)
+    except Exception:
+        logger.debug("Failed to set documents cache", exc_info=True)
+
+    return result
 
 @router.get("/stats", response_model=DocumentStats)
 def get_document_stats(
@@ -122,13 +142,21 @@ def update_document(
     current_user: User = Depends(get_current_user)
 ):
     """Update document metadata"""
-    return DocumentService.update_document(
+    updated = DocumentService.update_document(
         db, 
         document_id, 
         current_user,
         title=document_update.title,
         metadata=document_update.metadata
     )
+
+    # Invalidate cache for this user's documents (best-effort)
+    try:
+        cache.delete(f"user_{current_user.id}_documents")
+    except Exception:
+        logger.debug("Failed to delete documents cache on update", exc_info=True)
+
+    return updated
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_document(
@@ -138,4 +166,9 @@ def delete_document(
 ):
     """Delete document"""
     DocumentService.delete_document(db, document_id, current_user)
+    # Invalidate document list cache for this user
+    try:
+        cache.delete(f"user_{current_user.id}_documents")
+    except Exception:
+        logger.debug("Failed to delete documents cache on delete", exc_info=True)
     return None

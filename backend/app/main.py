@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from .config import settings
-from .routers import auth, documents, query, analysis
+from .routers import auth, documents, query, analysis, analytics
 import os
 
 app = FastAPI(
@@ -53,6 +53,7 @@ app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(query.router)
 app.include_router(analysis.router)
+app.include_router(analytics.router)
 
 @app.get("/")
 def read_root():
@@ -61,11 +62,12 @@ def read_root():
         "version": "1.0.0",
         "status": "running",
         "docs": "/docs",
-        "features": {
+            "features": {
             "auth": "/auth",
             "documents": "/documents",
             "query": "/query (RAG with Gemini)",
-            "analysis": "/analysis (Summary, Concepts, Quiz)"
+            "analysis": "/analysis (Summary, Concepts, Quiz)",
+            "analytics": "/analytics (popular, ... )"
         }
     }
 

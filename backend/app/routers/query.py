@@ -19,6 +19,7 @@ from ..services.rag_service_gemini import RAGServiceGemini
 from ..utils.security import get_current_user
 from ..models.user import User
 from ..models.document import Query as QueryModel
+from ..utils.cache import cache
 
 router = APIRouter(prefix="/query", tags=["Query & RAG"])
 
@@ -46,6 +47,13 @@ async def query_documents(
     )
 
     # Prepare response payload (match QueryResponse schema)
+    # Invalidate user's query stats & popular queries cache (new query changed stats)
+    try:
+        cache.delete(f"user_{current_user.id}_query_stats")
+        cache.delete(f"user_{current_user.id}_popular_queries")
+    except Exception:
+        pass
+
     return {
         **result,
         "query_text": request.query_text,
@@ -326,6 +334,12 @@ def get_query_stats(
       - avg_rating (try numeric column first, fallback to sources.feedback)
       - activity_last_7_days (list of {date, count})
     """
+    # Try cache first (TTL 60 seconds)
+    cache_key = f"user_{current_user.id}_query_stats"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+
     # total
     total_q = db.query(func.count(QueryModel.id)).filter(QueryModel.user_id == current_user.id).scalar() or 0
 
@@ -380,4 +394,12 @@ def get_query_stats(
         t = (now.date() - timedelta(days=6 - i))
         activity.append({"date": t.isoformat(), "count": int(daily_map.get(t, 0))})
 
-    return {"total_queries": int(total_q), "avg_rating": float(avg_rating), "activity_last_7_days": activity}
+    payload = {"total_queries": int(total_q), "avg_rating": float(avg_rating), "activity_last_7_days": activity}
+
+    # store stats in cache for 60 seconds
+    try:
+        cache.set(cache_key, payload, ttl_seconds=60)
+    except Exception:
+        pass
+
+    return payload
