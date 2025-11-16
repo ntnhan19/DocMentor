@@ -38,7 +38,7 @@ class Query(Base):
 
     # ✅ Thêm mới
     rating = Column(Float, nullable=True, default=None)
-
+    feedback = Column(JSON, nullable=True)
     # Relationship
     user = relationship("User", back_populates="queries")
 

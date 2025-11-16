@@ -3,10 +3,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from sqlalchemy import func, cast, Date
 from datetime import datetime, timedelta, time
+from sqlalchemy import func, desc, asc
 from typing import List, Optional
 
 from ..database import get_db
-from ..schemas.query import QueryRequest, QueryResponse, QueryHistory, QueryFeedback
+from ..schemas.query import QueryFeedbackCreate, QueryRequest, QueryResponse, QueryHistory, QueryFeedback
 from ..services.rag_service_gemini import RAGServiceGemini
 from ..utils.security import get_current_user
 from ..models.user import User
@@ -43,23 +44,61 @@ async def query_documents(
 # ==========================================================
 # 2️⃣ XEM LỊCH SỬ QUERY (PHÂN TRANG)
 # ==========================================================
-@router.get("/history")
+@router.get("/history", response_model=QueryHistory)
 def get_query_history(
     skip: int = QueryParam(0, ge=0),
     limit: int = QueryParam(20, ge=1, le=100),
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    search: Optional[str] = None,
+    sort_by: Optional[str] = QueryParam("date", regex="^(date|rating|relevance)$"),
+    order: Optional[str] = QueryParam("desc", regex="^(asc|desc)$"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    """Lấy lịch sử tìm kiếm của user (có phân trang, sắp xếp mới nhất)"""
-    queries = (
-        db.query(QueryModel)
-        .filter(QueryModel.user_id == current_user.id)
-        .order_by(QueryModel.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    """
+    ✅ Lấy lịch sử truy vấn có hỗ trợ:
+    - Lọc theo ngày
+    - Tìm kiếm từ khóa
+    - Sắp xếp linh hoạt (date, rating, relevance)
+    """
 
+    query = db.query(QueryModel).filter(QueryModel.user_id == current_user.id)
+
+    # --- Lọc theo ngày ---
+    try:
+        if date_from:
+            start_date = datetime.strptime(date_from, "%Y-%m-%d")
+            query = query.filter(QueryModel.created_at >= start_date)
+        if date_to:
+            end_date = datetime.strptime(date_to, "%Y-%m-%d")
+            query = query.filter(QueryModel.created_at <= end_date)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
+
+    # --- Tìm kiếm ---
+    if search:
+        safe_search = search.replace("%", "\\%").replace("_", "\\_").replace("#", "\\#").replace("/", "\\/")
+        query = query.filter(QueryModel.query_text.ilike(f"%{safe_search}%", escape="\\"))
+
+    # --- Sắp xếp ---
+    sort_column = QueryModel.created_at  # default sort
+    if sort_by == "rating":
+        sort_column = QueryModel.rating
+    elif sort_by == "relevance":
+        # Hiện chưa có độ tương đồng thực tế -> tạm dùng created_at
+        sort_column = QueryModel.created_at
+
+    if order == "desc":
+        query = query.order_by(desc(sort_column))
+    else:
+        query = query.order_by(asc(sort_column))
+
+    # --- Phân trang ---
+    total = query.count()
+    queries = query.offset(skip).limit(limit).all()
+
+    # --- Định dạng dữ liệu trả về ---
     formatted_queries = []
     for q in queries:
         formatted_queries.append({
@@ -69,14 +108,9 @@ def get_query_history(
             "sources": q.sources or [],
             "processing_time_ms": q.execution_time or 0,
             "confidence_score": 0.0,
-            "created_at": q.created_at
+            "created_at": q.created_at,
+            "rating": q.rating or 0
         })
-
-    total = (
-        db.query(func.count(QueryModel.id))
-        .filter(QueryModel.user_id == current_user.id)
-        .scalar()
-    )
 
     return {
         "total": total,
@@ -116,7 +150,7 @@ def delete_query(
 # ==========================================================
 @router.post("/feedback")
 def submit_feedback(
-    feedback: QueryFeedback,
+    feedback: QueryFeedbackCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -129,17 +163,36 @@ def submit_feedback(
     if not query:
         raise HTTPException(status_code=404, detail="Query not found")
 
-    # Lưu feedback vào trường sources
-    if not query.sources:
-        query.sources = {}
-
-    query.sources["feedback"] = {
+    query.feedback = {
         "rating": feedback.rating,
-        "text": feedback.feedback_text
+        "text": feedback.feedback_text,
+        "created_at": datetime.utcnow().isoformat()
     }
 
     db.commit()
-    return {"message": "Feedback submitted successfully"}
+    return {"message": "Feedback submitted successfully"}@router.post("/feedback")
+def submit_feedback(
+    feedback: QueryFeedbackCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    query = db.query(QueryModel).filter(
+        QueryModel.id == feedback.query_id,
+        QueryModel.user_id == current_user.id
+    ).first()
+
+    if not query:
+        raise HTTPException(status_code=404, detail="Query not found")
+
+    query.feedback = {
+        "rating": feedback.rating,
+        "text": feedback.feedback_text,
+        "created_at": datetime.utcnow().isoformat()
+    }
+
+    db.commit()
+    return {"message": "Feedback submitted successfully"
+}
 
 # ==========================================================
 # 5️⃣ THỐNG KÊ QUERY
