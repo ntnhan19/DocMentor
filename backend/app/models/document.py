@@ -57,12 +57,13 @@ class Query(Base):
     # 🟢 rating = optional (nếu có bạn sẽ dùng)
     feedback = Column(JSON, nullable=True)
     rating = Column(Float, nullable=True)
+    
 
     # ❌ KHÔNG dùng cột feedback — vì nó gây crash Render khi schema khác
     # feedback = Column(JSON, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="queries")
-
+    feedback = relationship("Feedback", uselist=False, back_populates="query")
     def __repr__(self):
         return f"<Query(id={self.id}, user_id={self.user_id}, rating={self.rating})>"
