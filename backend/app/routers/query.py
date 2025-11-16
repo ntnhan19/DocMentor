@@ -249,27 +249,36 @@ def submit_feedback(
 ):
     """
     Submit rating/feedback for a query.
-    Feedback is stored safely inside QueryModel.sources (JSON).
-    - Prevent multiple feedback submissions
-    - Normalize JSON structure
+    - Validate query ownership (403)
+    - Prevent double feedback
+    - Store feedback safely in QueryModel.sources (JSON)
+    - Normalize structure (list → dict)
+    - Auto-fill rating column if exists
     """
-    query = db.query(QueryModel).filter(QueryModel.id == feedback.query_id).first()
+
+    # 1️⃣ Check query exists
+    query = (
+        db.query(QueryModel)
+        .filter(QueryModel.id == feedback.query_id)
+        .first()
+    )
     if not query:
         raise HTTPException(status_code=404, detail="Query not found")
 
-# 2. Kiểm tra quyền sở hữu (403)
+    # 2️⃣ Check permission
     if query.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Forbidden: not your query")
 
-    # ---- Prevent double feedback ----
+    # 3️⃣ Prevent double feedback
     existing = query.sources
     if isinstance(existing, dict) and existing.get("feedback"):
         raise HTTPException(status_code=400, detail="Already submitted feedback")
 
-    # ---- Validate rating server-side ----
+    # 4️⃣ Validate rating server-side
     if not (1 <= feedback.rating <= 5):
         raise HTTPException(status_code=422, detail="Rating must be from 1 to 5")
 
+    # 5️⃣ Build feedback payload
     fb_payload = {
         "rating": int(feedback.rating),
         "text": feedback.feedback_text.strip() if feedback.feedback_text else None,
@@ -277,62 +286,93 @@ def submit_feedback(
         "user_id": current_user.id,
     }
 
+    # 6️⃣ Normalize sources JSON
     current_sources = query.sources
 
-    # ---- Normalize sources ----
     if not current_sources:
         new_sources = {"sources": [], "feedback": fb_payload}
 
     elif isinstance(current_sources, list):
+        # Convert list → dict wrapper
         new_sources = {"sources": current_sources, "feedback": fb_payload}
 
     elif isinstance(current_sources, dict):
+        # Ensure consistent shape
         new_sources = {
             "sources": current_sources.get("sources", []),
             "feedback": fb_payload
         }
+
     else:
+        # Unknown format → reset safely
         new_sources = {"sources": [], "feedback": fb_payload}
 
-    # ---- Save ----
+    # Apply changes
     query.sources = new_sources
 
-    # Optional: write rating if column exists
+    # Optional: write rating column if exists
     if hasattr(query, "rating"):
         try:
             query.rating = feedback.rating
-        except:
+        except Exception:
             pass
 
+    # 7️⃣ Save
     db.commit()
     db.refresh(query)
 
+    # 8️⃣ Return unified response
     return {
         "query_id": query.id,
         "feedback": fb_payload
     }
 
-@router.get("/{query_id}/feedback")
+@router.get("/{query_id}/feedback", status_code=200)
 def get_feedback(
     query_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # 1. Query có tồn tại?
-    query = db.query(QueryModel).filter(QueryModel.id == query_id).first()
+    """
+    Get feedback for a specific query.
+    - Validate query exists
+    - Validate query belongs to user (403)
+    - Normalize JSON sources
+    - Return feedback if exists, otherwise null
+    """
+
+    # 1️⃣ Check query exists
+    query = (
+        db.query(QueryModel)
+        .filter(QueryModel.id == query_id)
+        .first()
+    )
     if not query:
         raise HTTPException(status_code=404, detail="Query not found")
 
-    # 2. Có phải của user không?
+    # 2️⃣ Permission check
     if query.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Forbidden: not your query")
 
     sources = query.sources
 
-    # 3. Nếu không có feedback → trả null
-    if not sources or not isinstance(sources, dict) or "feedback" not in sources:
+    # 3️⃣ Feedback not found → return null
+    if not sources:
         return None
 
+    # If sources is list → no feedback ever stored
+    if isinstance(sources, list):
+        return None
+
+    # If malformed JSON → treat as no feedback
+    if not isinstance(sources, dict):
+        return None
+
+    # No feedback key → return null
+    if "feedback" not in sources:
+        return None
+
+    # 4️⃣ Return the feedback object
     return sources["feedback"]
 
 
