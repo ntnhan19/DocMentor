@@ -23,6 +23,8 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
         result = AuthService.authenticate_user(db, credentials.email, credentials.password)
         return {
             "success": True,
+            "access_token": result["access_token"],
+            "token_type": result["token_type"],
             "user": {
                 "id": result["user"].id,
                 "email": result["user"].email,
@@ -36,6 +38,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
+        print("Login error:", str(e))
         raise HTTPException(status_code=500, detail="Lỗi server")
 
 @router.get("/me", response_model=UserResponse)

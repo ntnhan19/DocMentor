@@ -1,12 +1,13 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from typing import Optional
-from typing import List, Optional
-from pydantic import BaseModel, Field, field_validator
 import re
+
+
 # ============================================================
-# 1️⃣ REQUEST SCHEMAS — người dùng gửi yêu cầu
+# REQUEST SCHEMAS
+# ============================================================
+
 class QueryRequest(BaseModel):
     query_text: str = Field(..., min_length=5, max_length=500)
     document_ids: List[int] = Field(..., min_items=1)
@@ -14,17 +15,17 @@ class QueryRequest(BaseModel):
 
 
 # ============================================================
-# 2️⃣ FEEDBACK SCHEMAS — người dùng đánh giá câu trả lời
+# FEEDBACK SCHEMAS
 # ============================================================
 
 class QueryFeedbackBase(BaseModel):
     rating: int = Field(..., ge=1, le=5, description="Rating từ 1-5 sao")
     feedback_text: Optional[str] = Field(None, max_length=500)
 
-    @validator("feedback_text")
+    @field_validator("feedback_text")
+    @classmethod
     def clean_feedback(cls, v):
         if v:
-            # Xóa HTML/script để tránh XSS
             v = re.sub(r"<[^>]*>", "", v)
             v = v.strip()
         return v
@@ -45,7 +46,7 @@ class QueryFeedback(QueryFeedbackBase):
 
 
 # ============================================================
-# 3️⃣ RESPONSE SCHEMAS — server trả dữ liệu về
+# RESPONSE SCHEMAS
 # ============================================================
 
 class SourceSchema(BaseModel):
@@ -69,4 +70,3 @@ class QueryResponse(BaseModel):
 class QueryHistory(BaseModel):
     queries: List[QueryResponse]
     total: int
-

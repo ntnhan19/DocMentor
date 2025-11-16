@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
-import os
 from pathlib import Path
 
 class Settings(BaseSettings):
@@ -12,17 +11,24 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    GEMINI_API_KEY: str  # 👈 Thêm dòng này
+    # GEMINI API
+    GEMINI_API_KEY: str
     
     # Pinecone
     PINECONE_API_KEY: str
-    PINECONE_ENVIRONMENT: str
     PINECONE_INDEX_NAME: str
+    PINECONE_ENVIRONMENT: str = "us-east-1"
     
     # File Upload
     UPLOAD_DIR: str = "uploads"
     MAX_FILE_SIZE: int = 52428800  # 50MB
     ALLOWED_EXTENSIONS: str = ".pdf,.docx,.txt"
+    
+    # Environment
+    ENVIRONMENT: str = "development"
+    
+    # Frontend URL (optional)
+    FRONTEND_URL: str = ""
     
     class Config:
         env_file = str(Path(__file__).resolve().parent.parent / ".env")
