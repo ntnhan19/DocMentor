@@ -1,0 +1,309 @@
+================================================================================
+                      DOCMENTOR - TEST SUMMARY
+================================================================================
+
+BƯỚC 1: START SERVER (2 phút)
+=============================
+
+Windows:
+  1. Double-click: RUN_API.bat
+  
+Linux/Mac:
+  1. chmod +x RUN_API.sh && ./RUN_API.sh
+
+Manual:
+  1. cd backend
+  2. pip install -r requirements.txt
+  3. python run.py
+
+Wait for: "Uvicorn running on http://0.0.0.0:8000"
+
+Check: http://localhost:8000/health
+
+
+BƯỚC 2: POSTMAN SETUP (3 phút)
+==============================
+
+1. Mở Postman (tải từ https://www.postman.com/downloads/)
+
+2. Import Collection:
+   File -> Import -> DocMentor_API.postman_collection.json
+
+3. Create Environment:
+   Environments -> New
+   Name: "DocMentor Local"
+   Add:
+     base_url = http://localhost:8000
+     token = (leave empty)
+
+4. Select Environment:
+   Top right dropdown -> "DocMentor Local"
+
+
+BƯỚC 3: TEST FLOW (5 phút)
+===========================
+
+Copy-paste từng request này:
+
+[1] Health Check
+    GET: {{base_url}}/health
+    Expected: {"status": "healthy"}
+
+[2] Register
+    POST: {{base_url}}/auth/register
+    JSON: {
+      "email": "test@example.com",
+      "password": "Test123!@",
+      "full_name": "Test User"
+    }
+
+[3] Login
+    POST: {{base_url}}/auth/login
+    JSON: {
+      "email": "test@example.com",
+      "password": "Test123!@"
+    }
+    COPY access_token!
+
+[4] Set Token in Environment
+    1. Copy the "access_token" từ response trên
+    2. Click "DocMentor Local" environment
+    3. Set token variable = copied_token
+
+[5] Upload Document
+    POST: {{base_url}}/documents/upload
+    Headers: Authorization: Bearer {{token}}
+    Body: form-data
+      - file: (chọn PDF/DOCX/TXT file)
+      - title: "My Document"
+    SAVE document_id = 1
+
+[6] Wait 30-60 seconds
+
+[7] Summary
+    POST: {{base_url}}/analysis/summary
+    Headers: Authorization: Bearer {{token}}
+    JSON: {
+      "document_id": 1,
+      "length": "medium"
+    }
+
+[8] Concepts
+    POST: {{base_url}}/analysis/concepts
+    Headers: Authorization: Bearer {{token}}
+    JSON: {
+      "document_id": 1,
+      "max_concepts": 10
+    }
+
+[9] Quiz
+    POST: {{base_url}}/analysis/quiz
+    Headers: Authorization: Bearer {{token}}
+    JSON: {
+      "document_id": 1,
+      "num_questions": 3,
+      "difficulty": "medium"
+    }
+
+[10] Query (RAG)
+     POST: {{base_url}}/query/
+     Headers: Authorization: Bearer {{token}}
+     JSON: {
+       "query_text": "What is this document about?",
+       "document_ids": [1],
+       "max_results": 5
+     }
+
+
+EXPECTED RESULTS
+================
+
+✅ [1] Health     -> 200 OK {"status": "healthy"}
+✅ [2] Register   -> 201 Created {access_token: "..."}
+✅ [3] Login      -> 200 OK {access_token: "..."}
+✅ [5] Upload     -> 201 Created {id: 1, processed: false}
+✅ [7] Summary    -> 200 OK {summary: "..."}
+✅ [8] Concepts   -> 200 OK {concepts: [...]}
+✅ [9] Quiz       -> 200 OK {questions: [...]}
+✅ [10] Query     -> 200 OK {answer: "...", sources: [...]}
+
+
+API ENDPOINTS QUICK REFERENCE
+==============================
+
+Authentication:
+  POST   /auth/register
+  POST   /auth/login
+  GET    /auth/me
+
+Documents:
+  POST   /documents/upload
+  GET    /documents/
+  GET    /documents/{id}
+  PUT    /documents/{id}
+  DELETE /documents/{id}
+
+Analysis:
+  POST   /analysis/summary
+  POST   /analysis/concepts
+  POST   /analysis/quiz
+
+Query & RAG:
+  POST   /query/
+  GET    /query/history
+  GET    /query/{id}
+  POST   /query/feedback
+  DELETE /query/{id}
+
+Utils:
+  GET    /health
+  GET    /
+
+
+COMMON ISSUES & FIXES
+====================
+
+❌ "Connection refused"
+   -> Server not running
+   -> Fix: Run RUN_API.bat or python run.py
+
+❌ "401 Unauthorized"
+   -> Token missing or expired
+   -> Fix: Login again, copy token to environment
+
+❌ "404 Not Found"
+   -> Document/Query doesn't exist
+   -> Fix: Check /documents/ for valid IDs
+
+❌ "Document not processed"
+   -> Server still processing
+   -> Fix: Wait 30-60 seconds, check /documents/{id}
+
+❌ "Gemini API Error"
+   -> API key wrong
+   -> Fix: Check GEMINI_API_KEY in .env
+
+❌ "Database Error"
+   -> PostgreSQL not running
+   -> Fix: Start PostgreSQL service
+
+
+ENVIRONMENT VARIABLES
+====================
+
+Create file: backend/.env
+
+DATABASE_URL=postgresql://postgres:21092004@localhost:5432/DocMentor
+SECRET_KEY=your-secret-key (min 32 chars)
+GEMINI_API_KEY=your-key-from-ai.google.dev
+PINECONE_API_KEY=your-key-from-pinecone.io
+PINECONE_INDEX_NAME=docmentor
+ENVIRONMENT=development
+
+
+IMPORTANT FILES
+===============
+
+For detailed guides:
+  - POSTMAN_QUICK_REFERENCE.txt   (all endpoints & examples)
+  - POSTMAN_TESTING_GUIDE.md      (full documentation)
+  - QUICK_START.md                (step-by-step)
+  - README_FULL.md                (complete docs)
+
+For testing:
+  - DocMentor_API.postman_collection.json (import this!)
+
+For auto-start:
+  - RUN_API.bat (Windows)
+  - RUN_API.sh (Linux/Mac)
+
+
+API KEYS
+========
+
+You need 2 API keys:
+
+1. Gemini (FREE)
+   -> Go: https://ai.google.dev/
+   -> Click: Get API Key
+   -> Paste to .env: GEMINI_API_KEY=...
+
+2. Pinecone (FREE tier)
+   -> Go: https://pinecone.io/
+   -> Sign up
+   -> Create index "docmentor" (768 dims)
+   -> Paste to .env: PINECONE_API_KEY=...
+
+
+POSTMAN VARIABLES
+=================
+
+Automatic (after login):
+  {{token}}         -> Your JWT token
+  {{document_id}}   -> Document ID (after upload)
+  {{query_id}}      -> Query ID (after query)
+
+Manual:
+  {{base_url}}      -> http://localhost:8000
+
+
+QUICK TEST COMMAND
+==================
+
+Complete flow:
+
+1. Start server
+2. Open Postman
+3. Import collection
+4. Create environment
+5. Health check (GET /health)
+6. Register (POST /auth/register)
+7. Login (POST /auth/login) - COPY TOKEN!
+8. Upload (POST /documents/upload) - WAIT 30s
+9. Summary (POST /analysis/summary)
+10. Concepts (POST /analysis/concepts)
+11. Quiz (POST /analysis/quiz)
+12. Query (POST /query/)
+
+ALL WORKING? SUCCESS!
+
+
+NEXT STEPS
+===========
+
+1. Test with your own documents
+2. Try different content types (PDF, DOCX, TXT)
+3. Test different analysis options
+4. Explore query filters
+5. Check response times
+6. Prepare for deployment
+
+
+HELP & DOCUMENTATION
+====================
+
+Local docs:
+  - Terminal (after starting): See logs
+  - http://localhost:8000/docs (Swagger UI)
+  - http://localhost:8000/redoc (ReDoc)
+
+Files:
+  - POSTMAN_QUICK_REFERENCE.txt (copy-paste examples)
+  - QUICK_START.md (detailed step-by-step)
+  - README_FULL.md (architecture & full guide)
+
+Online:
+  - GitHub Issues (for bugs)
+  - FastAPI Docs (https://fastapi.tiangolo.com/)
+
+================================================================================
+                            READY TO TEST!
+================================================================================
+
+Command: python run.py
+Then: Open Postman & import DocMentor_API.postman_collection.json
+
+Questions? Check the txt/md files or Swagger UI at /docs
+
+HAPPY TESTING! 🚀
+================================================================================

@@ -1,18 +1,20 @@
 import google.generativeai as genai
 from typing import List, Dict, Any
 import logging
+import json
+import re
 from ..config import settings
 
 logger = logging.getLogger(__name__)
 
 class GeminiService:
-    """Service for Google Gemini AI"""
+    """Service for Google Gemini AI - using Gemini 2.5 Flash (Free)"""
     
     def __init__(self):
         genai.configure(api_key=settings.GEMINI_API_KEY)
         self.chat_model = genai.GenerativeModel('models/gemini-2.5-flash')
         
-        # ✅ Configure safety settings (less strict)
+        # Configure safety settings (less strict for education)
         self.safety_settings = {
             'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
             'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
@@ -23,47 +25,27 @@ class GeminiService:
         logger.info("✅ Gemini 2.5 Flash initialized")
     
     def _safe_get_text(self, response) -> str:
-        """
-        Safely extract text from Gemini response
-        Handle cases where response is blocked or empty
-        """
+        """Safely extract text from Gemini response"""
         try:
-            # Check if response has text
             if hasattr(response, 'text') and response.text:
                 return response.text.strip()
             
-            # Check candidates
             if hasattr(response, 'candidates') and response.candidates:
                 candidate = response.candidates[0]
                 
-                # Check finish reason
                 if hasattr(candidate, 'finish_reason'):
                     finish_reason = candidate.finish_reason
-                    
-                    # 0 = FINISH_REASON_UNSPECIFIED
-                    # 1 = STOP (success)
-                    # 2 = MAX_TOKENS
-                    # 3 = SAFETY
-                    # 4 = RECITATION
-                    # 5 = OTHER
-                    
                     if finish_reason == 3:  # SAFETY
                         logger.warning("⚠️ Response blocked by safety filter")
-                        return "⚠️ Response blocked by safety filter. Please try rephrasing."
+                        return ""
                     elif finish_reason == 2:  # MAX_TOKENS
-                        logger.warning("⚠️ Response truncated (max tokens)")
-                        # Try to get partial text
                         if hasattr(candidate.content, 'parts') and candidate.content.parts:
                             return candidate.content.parts[0].text
-                        return "⚠️ Response too long. Please try with shorter content."
                 
-                # Try to get content parts
                 if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
                     if candidate.content.parts:
                         return candidate.content.parts[0].text
             
-            # If nothing works
-            logger.error("❌ No valid text in response")
             return ""
             
         except Exception as e:
@@ -76,7 +58,7 @@ class GeminiService:
         context: str,
         system_instruction: str = None
     ) -> str:
-        """Generate answer using Gemini"""
+        """Generate answer using Gemini based on context"""
         try:
             prompt = f"""Bạn là trợ giảng AI. Trả lời dựa trên context.
 
@@ -104,15 +86,14 @@ TRẢ LỜI (ngắn gọn):"""
             return f"Lỗi: {str(e)[:100]}"
     
     async def generate_summary(self, text: str, length: str = "medium") -> str:
-        """Generate summary"""
+        """Generate summary of document"""
         try:
             length_map = {
                 "short": "5 câu ngắn gọn",
                 "medium": "1-2 đoạn văn (~150 từ)",
-                "long": "3-4 đoạn văn (~300 từ)"  # ✅ Reduce from 500 to 300
+                "long": "3-4 đoạn văn (~300 từ)"
             }
             
-            # ✅ Limit text length based on summary type
             text_limits = {
                 "short": 8000,
                 "medium": 10000,
@@ -145,7 +126,7 @@ TÓM TẮT (chỉ tóm tắt, không thêm nhận xét):"""
             return "Không thể tạo tóm tắt. Vui lòng thử lại."
     
     async def extract_key_concepts(self, text: str, max_concepts: int = 10) -> List[str]:
-        """Extract key concepts"""
+        """Extract key concepts from text"""
         try:
             prompt = f"""Liệt kê {max_concepts} khái niệm quan trọng từ văn bản.
 
@@ -177,11 +158,8 @@ DANH SÁCH:"""
             # Parse concepts
             concepts = []
             for line in result_text.split('\n'):
-                # Clean line
                 clean = line.strip()
-                # Remove common prefixes
                 clean = clean.lstrip('•-*0123456789. ')
-                # Remove quotes
                 clean = clean.strip('"\'')
                 
                 if clean and len(clean) > 2 and len(clean) < 100:
@@ -200,7 +178,7 @@ DANH SÁCH:"""
         num_questions: int = 5,
         difficulty: str = "medium"
     ) -> List[Dict[str, Any]]:
-        """Generate quiz questions"""
+        """Generate quiz questions from text"""
         try:
             prompt = f"""Tạo CHÍNH XÁC {num_questions} câu hỏi trắc nghiệm.
 
@@ -239,10 +217,6 @@ JSON (chỉ JSON, không text khác):
                 return []
             
             # Parse JSON
-            import json
-            import re
-            
-            # Extract JSON
             json_text = result_text
             if "```json" in json_text:
                 match = re.search(r'```json\s*(.*?)\s*```', json_text, re.DOTALL)
@@ -253,7 +227,6 @@ JSON (chỉ JSON, không text khác):
                 if match:
                     json_text = match.group(1)
             
-            # Try to find JSON array in text
             if not json_text.strip().startswith('['):
                 match = re.search(r'(\[.*\])', json_text, re.DOTALL)
                 if match:
@@ -272,7 +245,6 @@ JSON (chỉ JSON, không text khác):
             
         except json.JSONDecodeError as e:
             logger.error(f"❌ JSON parse error: {str(e)}")
-            logger.error(f"Response: {result_text[:500]}")
             return []
         except Exception as e:
             logger.error(f"❌ Error: {str(e)}")
