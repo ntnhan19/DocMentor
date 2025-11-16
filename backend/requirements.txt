@@ -24,7 +24,7 @@ google-generativeai==0.3.2
 # AI/ML - OpenAI
 openai>=1.0.0
 
-# Document Processing (trước torch)
+# Document Processing
 PyPDF2==3.0.1
 python-docx==1.1.0
 pdfplumber==0.10.3
@@ -32,7 +32,7 @@ pdfplumber==0.10.3
 # Vector DB
 pinecone-client>=3.0.0
 
-# ML Libraries (cài cuối cùng vì nặng nhất)
-torch
-sentence-transformers==2.2.2
+# LLM Framework
 langchain==0.1.0
+
+# Note: torch & sentence-transformers removed (using Gemini embeddings instead)
