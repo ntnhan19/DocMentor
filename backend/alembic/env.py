@@ -5,6 +5,17 @@ from sqlalchemy import pool
 
 from alembic import context
 
+import sys
+from pathlib import Path
+
+# Add parent directory to path
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
+from app.database import Base
+from app.config import settings  # ⭐ IMPORT SETTINGS
+from app.models.user import User
+from app.models.document import Document, Query
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -16,14 +27,6 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-from app.database import Base
-from app.models import user, document
-
-# target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -63,8 +66,12 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    # ⭐⭐⭐ PHẦN QUAN TRỌNG NHẤT ⭐⭐⭐
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = settings.DATABASE_URL  # Đọc từ environment variable
+    
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,  
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
