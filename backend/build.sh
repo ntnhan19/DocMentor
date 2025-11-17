@@ -14,7 +14,6 @@ echo "🗑️ Resetting database..."
 python reset_db.py
 
 echo "🗄️ Running database migrations..."
-cd backend
 alembic upgrade head
 cd ..
 
