@@ -11,7 +11,7 @@ echo "📁 Creating uploads directory..."
 mkdir -p uploads
 
 echo "🗑️ Resetting database..."
-python backend/reset_db.py
+python reset_db.py
 
 echo "🗄️ Running database migrations..."
 cd backend
