@@ -4,6 +4,10 @@ from .database import engine, Base
 from .config import settings
 from .routers import auth, documents, query, analysis, analytics
 import os
+import logging
+
+logging.basicConfig()
+logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
 app = FastAPI(
     title="DocMentor API",

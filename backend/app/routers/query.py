@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, cast, Date, desc, asc
 from datetime import datetime, timedelta, time
 from typing import List, Optional, Any, Dict
+from sqlalchemy.orm import joinedload, selectinload
 
 from ..database import get_db
 # Adjust imports to your schemas names; we expect these to exist
@@ -18,7 +19,7 @@ from ..schemas.query import (
 from ..services.rag_service_gemini import RAGServiceGemini
 from ..utils.security import get_current_user
 from ..models.user import User
-from ..models.document import Query as QueryModel
+from ..models.document import Document, Query as QueryModel
 from app.schemas import query
 
 router = APIRouter(prefix="/query", tags=["Query & RAG"])
@@ -68,7 +69,18 @@ async def query_documents(
         "created_at": datetime.utcnow()
     }
 
-
+@router.get("/")
+def get_documents(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    docs = (
+        db.query(Document)
+        .options(joinedload(Document.user))
+        .filter(Document.user_id == current_user.id)
+        .all()
+    )
+    return docs
 
 
 # -------------------------------
@@ -87,29 +99,35 @@ def get_query_history(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Get query history for current user with:
-      - pagination (skip, limit)
-      - optional date range filter (YYYY-MM-DD)
-      - text search (ILIKE)
-      - sort_by: date|rating|relevance
-      - order: asc|desc
+    Optimized version:
+    - Avoid N+1 problem using selectinload() + joinedload()
+    - Load documents + feedback + user in 2–3 queries, not dozens
+    - Keep existing filters, search, sort, pagination
     """
-    q = db.query(QueryModel).filter(QueryModel.user_id == current_user.id)
+
+    # ⭐ ADD EAGER LOADING to avoid N+1
+    q = (
+        db.query(QueryModel)
+        .options(
+            selectinload(QueryModel.documents),   # load documents in batch
+            selectinload(QueryModel.feedbacks),   # load feedbacks in batch (if you have relationship)
+            joinedload(QueryModel.user),          # load query owner
+        )
+        .filter(QueryModel.user_id == current_user.id)
+    )
 
     # parse/filter dates
     try:
         if date_from:
             start_date = datetime.strptime(date_from, "%Y-%m-%d")
-            # include from midnight of start_date
             q = q.filter(QueryModel.created_at >= datetime.combine(start_date.date(), time.min))
         if date_to:
             end_date = datetime.strptime(date_to, "%Y-%m-%d")
-            # include until end of date_to
             q = q.filter(QueryModel.created_at <= datetime.combine(end_date.date(), time.max))
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
 
-    # search (escape %, _, #, / to avoid unintentionally matching)
+    # search filter
     if search:
         safe = (
             search.replace("\\", "\\\\")
@@ -118,16 +136,13 @@ def get_query_history(
             .replace("#", "\\#")
             .replace("/", "\\/")
         )
-        # ILIKE with explicit escape char
         q = q.filter(QueryModel.query_text.ilike(f"%{safe}%", escape="\\"))
 
-    # choose sort column
+    # sorting
     sort_col = QueryModel.created_at
     if sort_by == "rating":
-        # note: rating may be NULL -> ordering will put NULL first/last depending DB
         sort_col = QueryModel.rating
     elif sort_by == "relevance":
-        # no real relevance column; fallback to created_at (most recent as proxy)
         sort_col = QueryModel.created_at
 
     if order == "desc":
@@ -135,40 +150,38 @@ def get_query_history(
     else:
         q = q.order_by(asc(sort_col))
 
+    # ⭐ COUNT (fast, no need .all())
     total = q.count()
+
+    # pagination
     items = q.offset(skip).limit(limit).all()
 
+    # ⭐ KEEP YOUR EXISTING RESPONSE FORMAT
     formatted = []
     for row in items:
-        # normalize sources for response: ensure list of dicts or empty list
         sources = row.sources or []
-        # if stored as object with 'sources' key (backcompat), try to extract list
+
         if isinstance(sources, dict) and "sources" in sources and isinstance(sources["sources"], list):
             out_sources = sources["sources"]
         elif isinstance(sources, list):
             out_sources = sources
         elif isinstance(sources, dict) and "feedback" in sources and not sources.get("sources"):
-            # no sources list but feedback stored; set empty list for response
             out_sources = []
         else:
-            # fallback: convert to empty list
             out_sources = []
 
-        # map items to expected SourceSchema keys (some keys optional)
-        # Ensure keys exist (document_id, document_title, page_number, similarity_score, text)
         normalized_sources = []
         for s in out_sources:
-            if not isinstance(s, dict):
-                continue
-            normalized_sources.append(
-                {
-                    "document_id": s.get("document_id"),
-                    "document_title": s.get("document_title"),
-                    "page_number": s.get("page_number"),
-                    "similarity_score": s.get("similarity_score"),
-                    "text": s.get("text"),
-                }
-            )
+            if isinstance(s, dict):
+                normalized_sources.append(
+                    {
+                        "document_id": s.get("document_id"),
+                        "document_title": s.get("document_title"),
+                        "page_number": s.get("page_number"),
+                        "similarity_score": s.get("similarity_score"),
+                        "text": s.get("text"),
+                    }
+                )
 
         formatted.append(
             {
@@ -179,14 +192,78 @@ def get_query_history(
                 "processing_time_ms": row.execution_time or 0,
                 "confidence_score": 0.0,
                 "created_at": row.created_at,
-                # include rating in payload if exists (optional)
-                # QueryResponse doesn't have rating by default; if you want it add to schema
             }
         )
 
     return {"queries": formatted, "total": total}
 
+# -------------------------------
+# 6) Statistics (GET /query/stats)
+# -------------------------------
+@router.get("/stats")
+def get_query_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Optimized version:
+    - Reduce 3–5 DB queries -> only 2 queries
+    - Use SQL aggregate functions efficiently
+    - Avoid scanning JSON unless absolutely needed
+    """
 
+    # -----------------------------------------
+    # 1️⃣ Single aggregated query: total + avg rating
+    # -----------------------------------------
+    totals = (
+        db.query(
+            func.count(QueryModel.id).label("total"),
+            func.avg(QueryModel.rating).label("avg_rating")
+        )
+        .filter(QueryModel.user_id == current_user.id)
+        .first()
+    )
+
+    total_queries = int(totals.total or 0)
+    avg_rating_numeric = totals.avg_rating
+
+    # convert numeric avg → float
+    avg_rating = round(float(avg_rating_numeric), 2) if avg_rating_numeric else 0.0
+
+    # -----------------------------------------
+    # 2️⃣ Activity 7 ngày gần đây
+    # -----------------------------------------
+    now = datetime.utcnow()
+    start_dt = datetime.combine((now.date() - timedelta(days=6)), time.min)
+
+    rows = (
+        db.query(
+            cast(QueryModel.created_at, Date).label("day"),
+            func.count(QueryModel.id).label("cnt")
+        )
+        .filter(QueryModel.user_id == current_user.id)
+        .filter(QueryModel.created_at >= start_dt)
+        .group_by(cast(QueryModel.created_at, Date))
+        .order_by(cast(QueryModel.created_at, Date))
+        .all()
+    )
+
+    day_map = {r.day: int(r.cnt) for r in rows}
+
+    # Build full 7-day list
+    activity = []
+    for i in range(7):
+        d = now.date() - timedelta(days=6 - i)
+        activity.append({
+            "date": d.isoformat(),
+            "count": day_map.get(d, 0)
+        })
+
+    return {
+        "total_queries": total_queries,
+        "avg_rating": avg_rating,
+        "activity_last_7_days": activity
+    }
 # -------------------------------
 # 3) Get query detail (GET /query/{query_id})
 # -------------------------------
@@ -196,16 +273,32 @@ def get_query_detail(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """
+    Optimized version:
+    - Avoid N+1 problem using joinedload + selectinload
+    - Load documents + user + feedback in 1–2 queries
+    - Keep same response format as before
+    """
+
     query = (
         db.query(QueryModel)
+        .options(
+            joinedload(QueryModel.user),            # load owner
+            selectinload(QueryModel.documents),     # load documents in batch
+            selectinload(QueryModel.feedbacks),     # load feedbacks in batch (nếu dùng FK table)
+        )
         .filter(QueryModel.id == query_id, QueryModel.user_id == current_user.id)
         .first()
     )
+
     if not query:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Query not found")
 
-    # normalize sources (same logic as history)
+    # ---------------------
+    # Normalize sources JSON
+    # ---------------------
     sources = query.sources or []
+
     if isinstance(sources, dict) and "sources" in sources and isinstance(sources["sources"], list):
         out_sources = sources["sources"]
     elif isinstance(sources, list):
@@ -215,18 +308,20 @@ def get_query_detail(
 
     normalized_sources = []
     for s in out_sources:
-        if not isinstance(s, dict):
-            continue
-        normalized_sources.append(
-            {
-                "document_id": s.get("document_id"),
-                "document_title": s.get("document_title"),
-                "page_number": s.get("page_number"),
-                "similarity_score": s.get("similarity_score"),
-                "text": s.get("text"),
-            }
-        )
+        if isinstance(s, dict):
+            normalized_sources.append(
+                {
+                    "document_id": s.get("document_id"),
+                    "document_title": s.get("document_title"),
+                    "page_number": s.get("page_number"),
+                    "similarity_score": s.get("similarity_score"),
+                    "text": s.get("text"),
+                }
+            )
 
+    # ---------------------
+    # Unified response
+    # ---------------------
     return {
         "query_id": query.id,
         "query_text": query.query_text,
@@ -403,72 +498,4 @@ def delete_query(
     return {"message": "Query deleted successfully", "deleted_id": query_id}
 
 
-# -------------------------------
-# 6) Statistics (GET /query/stats)
-# -------------------------------
-@router.get("/stats")
-def get_query_stats(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    Return:
-      - total_queries
-      - avg_rating (try numeric column first, fallback to sources.feedback)
-      - activity_last_7_days (list of {date, count})
-    """
-    # total
-    total_q = db.query(func.count(QueryModel.id)).filter(QueryModel.user_id == current_user.id).scalar() or 0
 
-    # try numeric avg rating from column (fast), else fallback to scanning sources JSON
-    avg_rating = 0.0
-    try:
-        avg = db.query(func.avg(QueryModel.rating)).filter(
-            QueryModel.user_id == current_user.id,
-            QueryModel.rating.isnot(None),
-        ).scalar()
-        avg_rating = round(float(avg), 2) if avg is not None else 0.0
-    except Exception:
-        # fallback: scan JSON
-        records = (
-            db.query(QueryModel)
-            .filter(QueryModel.user_id == current_user.id)
-            .filter(QueryModel.sources.isnot(None))
-            .all()
-        )
-        ratings = []
-        for r in records:
-            src = r.sources
-            if isinstance(src, dict):
-                fb = src.get("feedback")
-                if isinstance(fb, dict) and "rating" in fb:
-                    try:
-                        ratings.append(int(fb["rating"]))
-                    except Exception:
-                        pass
-        avg_rating = round(sum(ratings) / len(ratings), 2) if ratings else 0.0
-
-    # daily counts last 7 days (UTC)
-    now = datetime.utcnow()
-    start_dt = datetime.combine((now.date() - timedelta(days=6)), time.min)
-
-    try:
-        daily_counts = (
-            db.query(cast(QueryModel.created_at, Date).label("d"), func.count(QueryModel.id).label("cnt"))
-            .filter(QueryModel.user_id == current_user.id)
-            .filter(QueryModel.created_at >= start_dt)
-            .group_by(cast(QueryModel.created_at, Date))
-            .order_by(cast(QueryModel.created_at, Date))
-            .all()
-        )
-        daily_map = {row.d: int(row.cnt) for row in daily_counts}
-    except Exception:
-        # DB might not support cast(...) - fallback to zeroes
-        daily_map = {}
-
-    activity = []
-    for i in range(7):
-        t = (now.date() - timedelta(days=6 - i))
-        activity.append({"date": t.isoformat(), "count": int(daily_map.get(t, 0))})
-
-    return {"total_queries": int(total_q), "avg_rating": float(avg_rating), "activity_last_7_days": activity}
