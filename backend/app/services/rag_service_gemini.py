@@ -102,19 +102,13 @@ class RAGServiceGemini:
             # -------------------------------------------------------
             processing_time = int((time.time() - start_time) * 1000)
 
+            # ✅ LƯU ĐÚNG CẤU TRÚC THEO SourceSchema
             query_record = QueryModel(
                 user_id=user.id,
                 query_text=query_text,
                 normalized_query=normalize_text(query_text),
                 response_text=answer,
-                sources=[
-                    {
-                        'document_id': s['document_id'],
-                        'chunk_index': s['chunk_index'],
-                        'score': s['similarity_score']
-                    }
-                    for s in sources
-                ],
+                sources=sources,  # ✅ Lưu toàn bộ sources đã format
                 execution_time=processing_time
             )
 
@@ -159,20 +153,29 @@ class RAGServiceGemini:
         return "\n".join(context_parts)
 
     def _format_sources(self, matches: List[Dict], doc_map: Dict[int, Document]) -> List[Dict]:
-        """Format metadata for each matching chunk."""
+        """
+        ✅ Format metadata theo đúng SourceSchema
+        
+        Required fields:
+        - document_id: int
+        - document_title: Optional[str]
+        - page_number: Optional[int]
+        - similarity_score: Optional[float]
+        - text: Optional[str]
+        """
         sources = []
 
         for match in matches:
             doc_id = match['document_id']
             doc = doc_map.get(doc_id)
 
+            # ✅ Đảm bảo đầy đủ các trường theo SourceSchema
             sources.append({
                 'document_id': doc_id,
-                'document_title': doc.title if doc else "Unknown",
-                'chunk_index': match['chunk_index'],
-                'text': match['text'][:200] + "...",
-                'page_number': match.get('page_number', 0),
-                'similarity_score': round(match['score'], 3)
+                'document_title': doc.title if doc else "Unknown Document",
+                'page_number': match.get('page_number'),  # Có thể None
+                'similarity_score': round(match['score'], 3),
+                'text': match['text'][:300] + "..." if len(match['text']) > 300 else match['text']
             })
 
         return sources
