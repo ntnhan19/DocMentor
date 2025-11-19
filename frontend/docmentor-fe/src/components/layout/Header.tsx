@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { mockAuthService, User } from "@/services/auth/mockAuthService";
 
 interface HeaderProps {
   hideAuthButtons?: boolean;
-  user?: {
-    name: string;
-    avatar?: string;
-  } | null;
 }
 
-const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
+const Header: React.FC<HeaderProps> = ({ hideAuthButtons }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
-  // Detect scroll for header style change
+  // Detect scroll
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -29,16 +27,25 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
     setIsMobileMenuOpen(false);
   }, [location]);
 
-  //const navItems = [{ label: "Trang chủ", path: "/" }];
+  // Lấy thông tin user khi load header
+  useEffect(() => {
+    const currentUser = mockAuthService.getCurrentUser();
+    setUser(currentUser);
+  }, []);
 
-  const handleNavClick = (path: string) => {
-    if (path.startsWith("#")) {
-      const element = document.querySelector(path);
-      if (element) element.scrollIntoView({ behavior: "smooth" });
-    } else {
-      navigate(path);
-    }
+  const handleLogout = () => {
+    mockAuthService.logout();
+    setUser(null);
+    navigate("/login");
   };
+
+  const menuItems = [
+    //{ label: "Dashboard", path: "/user/dashboard" },
+    { label: "Chat AI", path: "/user/chat" },
+    { label: "Tài liệu của tôi", path: "/user/documents" },
+  ];
+
+  const settingsItems = [{ label: "Cài đặt", path: "/user/settings" }];
 
   return (
     <header
@@ -65,37 +72,65 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
             <span className="text-2xl font-bold text-white">DocMentor</span>
           </div>
 
-          {/* Desktop Navigation */}
-          {/*<nav className="hidden md:flex items-center gap-8">
-            {navItems.map((item) => (
-              <button
-                key={item.path}
-                onClick={() => handleNavClick(item.path)}
-                className="font-medium text-text-muted transition-colors hover:text-white"
-              >
-                {item.label}
-              </button>
-            ))}
-          </nav>
-
-          {/* Desktop Right Section */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* ✅ Desktop section */}
+          <div className="hidden md:flex items-center gap-6">
             {user ? (
-              // ✅ Nếu đã đăng nhập, hiển thị user info
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-full overflow-hidden">
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : null}
+              <>
+                {/* Menu khi login */}
+                <nav className="flex items-center gap-6">
+                  {menuItems.map((item) => (
+                    <button
+                      key={item.path}
+                      onClick={() => navigate(item.path)}
+                      className={`text-sm font-medium transition-colors ${
+                        location.pathname.startsWith(item.path)
+                          ? "text-primary border-b-2 border-primary pb-1"
+                          : "text-text-muted hover:text-white"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </nav>
+
+                {/* Avatar dropdown */}
+                <div className="relative group">
+                  <div className="w-9 h-9 bg-gradient-to-br from-primary to-purple-600 rounded-full overflow-hidden cursor-pointer">
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex items-center justify-center w-full h-full text-white font-semibold">
+                        {user.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Dropdown menu */}
+                  <div className="absolute hidden group-hover:block right-0 mt-3 w-44 bg-background border border-accent rounded-lg shadow-lg">
+                    {settingsItems.map((item) => (
+                      <button
+                        key={item.path}
+                        onClick={() => navigate(item.path)}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-white transition-colors"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
                 </div>
-                <span className="text-white text-sm">{user.name}</span>
-              </div>
+              </>
             ) : !hideAuthButtons ? (
-              // ✅ Nếu chưa login và không ẩn nút
+              // Nếu chưa đăng nhập
               <>
                 <button
                   onClick={() => navigate("/login")}
@@ -113,7 +148,7 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
             ) : null}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="md:hidden p-2 rounded-lg text-white"
@@ -150,34 +185,53 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons, user }) => {
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* ✅ Mobile menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden mt-4 pb-4 bg-accent rounded-lg shadow-lg">
             <nav className="flex flex-col">
-              {/*navItems.map((item) => (
-                <button
-                  key={item.path}
-                  onClick={() => handleNavClick(item.path)}
-                  className="px-4 py-3 text-left text-text-muted hover:bg-background/50 hover:text-white transition-colors font-medium"
-                >
-                  {item.label}
-                </button>
-              ))*/}
-              {!hideAuthButtons && !user && (
-                <div className="border-t border-background mt-2 pt-2 px-4 space-y-2">
-                  <button
-                    onClick={() => navigate("/login")}
-                    className="w-full text-center px-4 py-2 text-text-muted font-semibold rounded-lg hover:bg-background/50 transition-colors"
-                  >
-                    Đăng nhập
-                  </button>
-                  <button
-                    onClick={() => navigate("/register")}
-                    className="w-full px-4 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-opacity-90 transition-colors"
-                  >
-                    Đăng ký
-                  </button>
-                </div>
+              {user ? (
+                <>
+                  {menuItems.map((item) => (
+                    <button
+                      key={item.path}
+                      onClick={() => navigate(item.path)}
+                      className="px-4 py-3 text-left text-text-muted hover:bg-background/50 hover:text-white transition-colors font-medium"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                  <div className="border-t border-background mt-2 pt-2">
+                    <button
+                      onClick={() => navigate("/user/settings")}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-background/50"
+                    >
+                      Cài đặt
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
+                </>
+              ) : (
+                !hideAuthButtons && (
+                  <div className="border-t border-background mt-2 pt-2 px-4 space-y-2">
+                    <button
+                      onClick={() => navigate("/login")}
+                      className="w-full text-center px-4 py-2 text-text-muted font-semibold rounded-lg hover:bg-background/50 transition-colors"
+                    >
+                      Đăng nhập
+                    </button>
+                    <button
+                      onClick={() => navigate("/register")}
+                      className="w-full px-4 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-opacity-90 transition-colors"
+                    >
+                      Đăng ký
+                    </button>
+                  </div>
+                )
               )}
             </nav>
           </div>

@@ -15,7 +15,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
 }) => {
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0118] text-white relative overflow-hidden">
-      {/* Hiệu ứng ánh sáng radial như Hero */}
+      {/* Hiệu ứng ánh sáng radial như HeroChat */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-full opacity-20 pointer-events-none"
         style={{

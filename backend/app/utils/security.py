@@ -25,6 +25,7 @@ def get_password_hash(password: str) -> str:
     """Hash a password using argon2"""
     return pwd_context.hash(password)
 
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT access token"""
     to_encode = data.copy()
