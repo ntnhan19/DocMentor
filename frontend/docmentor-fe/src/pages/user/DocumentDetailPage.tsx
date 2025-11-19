@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { documentService } from "@/services/document/documentService";
 import { Document } from "@/types/document.types";
 import { DocumentViewer } from "@/features/documents/components/user/DocumentViewer";
-import { DocumentMeta } from "@/components/user/DocumentCard/DocumentMeta";
+import { DocumentMeta } from "@/features/documents/components/user/DocumentMeta";
 
 const DocumentDetailPage: React.FC = () => {
   const { documentId } = useParams<{ documentId: string }>();

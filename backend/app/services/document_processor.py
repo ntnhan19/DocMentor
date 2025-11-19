@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 import PyPDF2
 from docx import Document as DocxDocument
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from typing import List, Dict, Any
 import logging
 from ..models.document import Document
