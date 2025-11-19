@@ -17,7 +17,6 @@ class Document(Base):
     file_type = Column(String, nullable=False)  # pdf, docx, txt
     file_size = Column(Integer, nullable=False)
 
-    # 🟢 CHỌN MỘT TRONG HAI — nhưng để chuẩn thì dùng doc_metadata
     metadata_ = Column("doc_metadata", JSON, nullable=True)
     processed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -41,26 +40,15 @@ class Query(Base):
 
     query_text = Column(Text, nullable=False)
     response_text = Column(Text, nullable=True)
-    normalized_query = Column(String, index=True)   # text không dấu
-
-    # 🟢 nơi sẽ lưu sources + feedback chung
-    # ví dụ:
-    # {
-    #   "sources": [...],
-    #   "feedback": {"rating": 5, "text": "...", "created_at": "..."}
-    # }
+    normalized_query = Column(String, index=True) 
     sources = Column(JSON, default=None)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     execution_time = Column(Integer, nullable=True)
 
-    # 🟢 rating = optional (nếu có bạn sẽ dùng)
     feedback = Column(JSON, nullable=True)
     rating = Column(Float, nullable=True)
     
-
-    # ❌ KHÔNG dùng cột feedback — vì nó gây crash Render khi schema khác
-    # feedback = Column(JSON, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="queries")

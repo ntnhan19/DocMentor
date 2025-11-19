@@ -20,7 +20,6 @@ from ..utils.cache import cache
 router = APIRouter(prefix="/documents", tags=["Documents"])
 logger = logging.getLogger(__name__)
 
-# ✅ FIX: Async background task với proper error handling
 async def process_document_background(document_id: int, file_path: str):
     """
     Background task to process document
@@ -32,14 +31,12 @@ async def process_document_background(document_id: int, file_path: str):
         processor = DocumentProcessor()
         logger.info(f"📝 Calling processor.process_document for doc {document_id}")
         
-        # ✅ Await the async function
         await processor.process_document(db, document_id, file_path)
         
         logger.info(f"✅ Background task COMPLETED for document {document_id}")
     except Exception as e:
         logger.error(f"❌ Background task FAILED for doc {document_id}: {str(e)}", exc_info=True)
         
-        # Update document status to failed
         try:
             doc = db.query(Document).filter(Document.id == document_id).first()
             if doc:
@@ -71,7 +68,6 @@ async def upload_document(
     
     logger.info(f"✅ Document saved to DB: ID={document.id}, Path={document.file_path}")
     
-    # ✅ Add background task
     logger.info(f"⏰ Adding background task for document {document.id}")
     background_tasks.add_task(
         process_document_background,

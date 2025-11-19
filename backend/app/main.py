@@ -13,10 +13,6 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# ===================================
-# CORS FIX - Quan trọng!
-# ===================================
-# KHÔNG cho phép "*" khi dùng allow_credentials=True
 allowed_origins = [
     "http://localhost:3000",
     "http://localhost:5173",
