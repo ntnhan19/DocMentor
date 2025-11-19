@@ -1,5 +1,3 @@
-// src/types/chat.types.ts
-
 // Chat types
 export interface SourceReference {
   documentId: string;
@@ -13,12 +11,12 @@ export interface ChatMessage {
   sender: "user" | "ai";
   timestamp: string; // ISO string format
   sources?: SourceReference[];
-  status?: "sent" | "error";
-  // ✨ Thêm thuộc tính này để lưu thông tin file đính kèm
+  // ✨ FIX: Thêm trạng thái 'sending' để không bị lỗi type
+  status?: "sent" | "error" | "sending";
   attachment?: {
     fileName: string;
-    fileSize: number; // lưu dưới dạng bytes
-    fileType: string; // ví dụ: 'pdf', 'docx'
+    fileSize: number;
+    fileType: string;
   };
 }
 
@@ -27,3 +25,6 @@ export interface Conversation {
   title: string;
   createdAt: string; // ISO string
 }
+
+// ✨ FIX: Export alias Message để ChatContainer không bị lỗi import
+export type Message = ChatMessage;

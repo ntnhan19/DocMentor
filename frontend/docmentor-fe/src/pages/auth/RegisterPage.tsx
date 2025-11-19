@@ -1,14 +1,12 @@
-// Register Page
-// src/pages/auth/RegisterPage.tsx
 import React, { useState } from "react";
 import AuthLayout from "../../components/layout/AuthLayout";
 import RegisterForm from "../../features/auth/components/RegisterForm";
-// import { useNavigate } from 'react-router-dom';
-// import { useAuth } from '../../features/auth/hooks/useAuth';
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../app/providers/AuthProvider";
 
 const RegisterPage: React.FC = () => {
-  // const navigate = useNavigate();
-  // const { register } = useAuth();
+  const navigate = useNavigate();
+  const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -22,34 +20,20 @@ const RegisterPage: React.FC = () => {
   }) => {
     try {
       setIsLoading(true);
-      setError("");
+      setError(""); // ⚠️ ĐÃ SỬA: Loại bỏ biến 'response' không cần thiết
 
-      // TODO: Replace with actual API call
-      console.log("Register data:", data);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Example API call (uncomment when backend is ready):
-      // const response = await register({
-      //   fullName: data.fullName,
-      //   email: data.email,
-      //   username: data.username,
-      //   password: data.password
-      // });
-      //
-      // if (response.success) {
-      //   navigate('/login', {
-      //     state: { message: 'Registration successful! Please login.' }
-      //   });
-      // }
-
-      // For now, just log success
-      alert(
-        "Registration successful! (This is a mock - connect to your backend)"
-      );
+      await register({
+        fullName: data.fullName,
+        email: data.email,
+        username: data.username,
+        password: data.password,
+      }); // Điều hướng sau khi đăng ký thành công
+      navigate("/login", {
+        state: { message: "Đăng ký thành công! Vui lòng đăng nhập." },
+      });
     } catch (err: any) {
-      setError(err.message || "Registration failed. Please try again.");
+      // Bắt lỗi từ API (ví dụ: email đã tồn tại)
+      setError(err.message || "Đăng ký thất bại. Vui lòng thử lại.");
     } finally {
       setIsLoading(false);
     }
@@ -60,11 +44,13 @@ const RegisterPage: React.FC = () => {
       title="Create Account"
       subtitle="Sign up to get started with DocMentor"
     >
+           {" "}
       <RegisterForm
         onSubmit={handleRegister}
         isLoading={isLoading}
         error={error}
       />
+         {" "}
     </AuthLayout>
   );
 };

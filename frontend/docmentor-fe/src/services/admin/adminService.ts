@@ -1,46 +1,53 @@
-// Admin management service
-// Dữ liệu giả cho Thống kê tổng quan
+import { adminApiService } from "../api/adminApiService";
+
+// --- SWITCH: Chuyển sang FALSE để dùng dữ liệu thật ---
+const USE_MOCK_DATA = false;
+
+// ... (Giữ lại các mock data cũ để fallback nếu cần hoặc xóa đi) ...
 const mockAdminStats = {
   totalUsers: 1345,
   totalDocuments: 4890,
   totalQueries: 56789,
 };
-
-// Dữ liệu giả cho Phân loại tài liệu
-const mockDocTypeStats = [
-  { name: "PDF", value: 3200 },
-  { name: "DOCX", value: 950 },
-  { name: "PPTX", value: 430 },
-  { name: "TXT", value: 310 },
-];
-
-// Dữ liệu giả cho Thống kê người dùng đăng ký (7 ngày qua)
-const mockUserSignupStats = [
-  { date: "Ngày 1", users: 15 },
-  { date: "Ngày 2", users: 22 },
-  { date: "Ngày 3", users: 18 },
-  { date: "Ngày 4", users: 30 },
-  { date: "Ngày 5", users: 25 },
-  { date: "Ngày 6", users: 40 },
-  { date: "Ngày 7", users: 55 },
-];
+// ...
 
 export const adminService = {
-  // Lấy các chỉ số tổng quan
   getDashboardStats: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return mockAdminStats;
+    if (USE_MOCK_DATA) {
+      await new Promise((res) => setTimeout(res, 500));
+      return mockAdminStats;
+    }
+    try {
+      return await adminApiService.getDashboardStats();
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+      return { totalUsers: 0, totalDocuments: 0, totalQueries: 0 }; // Fallback an toàn
+    }
   },
 
-  // Lấy dữ liệu phân loại tài liệu
   getDocTypeStats: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return mockDocTypeStats;
+    if (USE_MOCK_DATA) {
+      // ... return mock data
+      return [];
+    }
+    try {
+      return await adminApiService.getDocTypeStats();
+    } catch (error) {
+      console.error("Error fetching doc types:", error);
+      return [];
+    }
   },
 
-  // Lấy dữ liệu đăng ký người dùng
   getUserSignupStats: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return mockUserSignupStats;
+    if (USE_MOCK_DATA) {
+      // ... return mock data
+      return [];
+    }
+    try {
+      return await adminApiService.getUserSignupStats();
+    } catch (error) {
+      console.error("Error fetching user signups:", error);
+      return [];
+    }
   },
 };
