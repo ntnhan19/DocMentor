@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from app.database import Base
-from app.config import settings  # ⭐ IMPORT SETTINGS
+from app.config import settings 
 from app.models.user import User
 from app.models.document import Document, Query
 
@@ -66,7 +66,6 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # ⭐⭐⭐ PHẦN QUAN TRỌNG NHẤT ⭐⭐⭐
     configuration = config.get_section(config.config_ini_section, {})
     configuration["sqlalchemy.url"] = settings.DATABASE_URL  # Đọc từ environment variable
     
