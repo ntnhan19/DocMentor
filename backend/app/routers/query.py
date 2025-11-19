@@ -6,12 +6,11 @@ from datetime import datetime, timedelta, time
 from typing import List, Optional, Any, Dict
 
 from ..database import get_db
-# Adjust imports to your schemas names; we expect these to exist
+from ..models.feedback import Feedback  # ✅ Import Feedback model
 from ..schemas.query import (
     QueryRequest,
     QueryResponse,
     QueryHistory,
-    # prefer explicit create schema for feedback if you have it
     QueryFeedbackCreate,
 )
 
@@ -69,8 +68,6 @@ async def query_documents(
     }
 
 
-
-
 # -------------------------------
 # 2) Get history with filters (GET /query/history)
 # -------------------------------
@@ -100,16 +97,14 @@ def get_query_history(
     try:
         if date_from:
             start_date = datetime.strptime(date_from, "%Y-%m-%d")
-            # include from midnight of start_date
             q = q.filter(QueryModel.created_at >= datetime.combine(start_date.date(), time.min))
         if date_to:
             end_date = datetime.strptime(date_to, "%Y-%m-%d")
-            # include until end of date_to
             q = q.filter(QueryModel.created_at <= datetime.combine(end_date.date(), time.max))
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
 
-    # search (escape %, _, #, / to avoid unintentionally matching)
+    # search
     if search:
         safe = (
             search.replace("\\", "\\\\")
@@ -118,16 +113,13 @@ def get_query_history(
             .replace("#", "\\#")
             .replace("/", "\\/")
         )
-        # ILIKE with explicit escape char
         q = q.filter(QueryModel.query_text.ilike(f"%{safe}%", escape="\\"))
 
     # choose sort column
     sort_col = QueryModel.created_at
     if sort_by == "rating":
-        # note: rating may be NULL -> ordering will put NULL first/last depending DB
         sort_col = QueryModel.rating
     elif sort_by == "relevance":
-        # no real relevance column; fallback to created_at (most recent as proxy)
         sort_col = QueryModel.created_at
 
     if order == "desc":
@@ -140,22 +132,15 @@ def get_query_history(
 
     formatted = []
     for row in items:
-        # normalize sources for response: ensure list of dicts or empty list
+        # normalize sources for response
         sources = row.sources or []
-        # if stored as object with 'sources' key (backcompat), try to extract list
         if isinstance(sources, dict) and "sources" in sources and isinstance(sources["sources"], list):
             out_sources = sources["sources"]
         elif isinstance(sources, list):
             out_sources = sources
-        elif isinstance(sources, dict) and "feedback" in sources and not sources.get("sources"):
-            # no sources list but feedback stored; set empty list for response
-            out_sources = []
         else:
-            # fallback: convert to empty list
             out_sources = []
 
-        # map items to expected SourceSchema keys (some keys optional)
-        # Ensure keys exist (document_id, document_title, page_number, similarity_score, text)
         normalized_sources = []
         for s in out_sources:
             if not isinstance(s, dict):
@@ -179,8 +164,6 @@ def get_query_history(
                 "processing_time_ms": row.execution_time or 0,
                 "confidence_score": 0.0,
                 "created_at": row.created_at,
-                # include rating in payload if exists (optional)
-                # QueryResponse doesn't have rating by default; if you want it add to schema
             }
         )
 
@@ -204,7 +187,7 @@ def get_query_detail(
     if not query:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Query not found")
 
-    # normalize sources (same logic as history)
+    # normalize sources
     sources = query.sources or []
     if isinstance(sources, dict) and "sources" in sources and isinstance(sources["sources"], list):
         out_sources = sources["sources"]
@@ -248,12 +231,7 @@ def submit_feedback(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Submit rating/feedback for a query.
-    - Validate query ownership (403)
-    - Prevent double feedback
-    - Store feedback safely in QueryModel.sources (JSON)
-    - Normalize structure (list → dict)
-    - Auto-fill rating column if exists
+    ✅ Submit rating/feedback for a query - LƯU VÀO BẢNG FEEDBACKS
     """
 
     # 1️⃣ Check query exists
@@ -269,64 +247,52 @@ def submit_feedback(
     if query.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Forbidden: not your query")
 
-    # 3️⃣ Prevent double feedback
-    existing = query.sources
-    if isinstance(existing, dict) and existing.get("feedback"):
+    # 3️⃣ ✅ Kiểm tra đã có feedback trong BẢNG FEEDBACKS chưa
+    existing_feedback = (
+        db.query(Feedback)
+        .filter(Feedback.query_id == feedback.query_id)
+        .first()
+    )
+    if existing_feedback:
         raise HTTPException(status_code=400, detail="Already submitted feedback")
 
     # 4️⃣ Validate rating server-side
     if not (1 <= feedback.rating <= 5):
         raise HTTPException(status_code=422, detail="Rating must be from 1 to 5")
 
-    # 5️⃣ Build feedback payload
-    fb_payload = {
-        "rating": int(feedback.rating),
-        "text": feedback.feedback_text.strip() if feedback.feedback_text else None,
-        "created_at": datetime.utcnow().isoformat(),
-        "user_id": current_user.id,
-    }
+    # 5️⃣ ✅ TẠO FEEDBACK MỚI TRONG BẢNG FEEDBACKS
+    new_feedback = Feedback(
+        query_id=feedback.query_id,
+        user_id=current_user.id,
+        rating=feedback.rating,
+        feedback_text=feedback.feedback_text.strip() if feedback.feedback_text else None
+    )
 
-    # 6️⃣ Normalize sources JSON
-    current_sources = query.sources
-
-    if not current_sources:
-        new_sources = {"sources": [], "feedback": fb_payload}
-
-    elif isinstance(current_sources, list):
-        # Convert list → dict wrapper
-        new_sources = {"sources": current_sources, "feedback": fb_payload}
-
-    elif isinstance(current_sources, dict):
-        # Ensure consistent shape
-        new_sources = {
-            "sources": current_sources.get("sources", []),
-            "feedback": fb_payload
-        }
-
-    else:
-        # Unknown format → reset safely
-        new_sources = {"sources": [], "feedback": fb_payload}
-
-    # Apply changes
-    query.sources = new_sources
-
-    # Optional: write rating column if exists
+    db.add(new_feedback)
+    
+    # 6️⃣ (Optional) Cập nhật cột rating trong bảng queries
     if hasattr(query, "rating"):
-        try:
-            query.rating = feedback.rating
-        except Exception:
-            pass
+        query.rating = feedback.rating
 
-    # 7️⃣ Save
+    # 7️⃣ Save to database
     db.commit()
-    db.refresh(query)
+    db.refresh(new_feedback)
 
-    # 8️⃣ Return unified response
+    # 8️⃣ Return response
     return {
         "query_id": query.id,
-        "feedback": fb_payload
+        "feedback": {
+            "rating": new_feedback.rating,
+            "text": new_feedback.feedback_text,
+            "created_at": new_feedback.created_at.isoformat(),
+            "user_id": new_feedback.user_id
+        }
     }
 
+
+# -------------------------------
+# 5) Get feedback (GET /query/{query_id}/feedback)
+# -------------------------------
 @router.get("/{query_id}/feedback", status_code=200)
 def get_feedback(
     query_id: int,
@@ -334,11 +300,7 @@ def get_feedback(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Get feedback for a specific query.
-    - Validate query exists
-    - Validate query belongs to user (403)
-    - Normalize JSON sources
-    - Return feedback if exists, otherwise null
+    ✅ Get feedback for a query - LẤY TỪ BẢNG FEEDBACKS
     """
 
     # 1️⃣ Check query exists
@@ -354,31 +316,27 @@ def get_feedback(
     if query.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Forbidden: not your query")
 
-    sources = query.sources
+    # 3️⃣ ✅ LẤY FEEDBACK TỪ BẢNG FEEDBACKS
+    feedback = (
+        db.query(Feedback)
+        .filter(Feedback.query_id == query_id)
+        .first()
+    )
 
-    # 3️⃣ Feedback not found → return null
-    if not sources:
+    # 4️⃣ Return feedback or None
+    if not feedback:
         return None
 
-    # If sources is list → no feedback ever stored
-    if isinstance(sources, list):
-        return None
-
-    # If malformed JSON → treat as no feedback
-    if not isinstance(sources, dict):
-        return None
-
-    # No feedback key → return null
-    if "feedback" not in sources:
-        return None
-
-    # 4️⃣ Return the feedback object
-    return sources["feedback"]
-
+    return {
+        "rating": feedback.rating,
+        "text": feedback.feedback_text,
+        "created_at": feedback.created_at.isoformat(),
+        "user_id": feedback.user_id
+    }
 
 
 # -------------------------------
-# 5) Delete query (DELETE /query/{query_id})
+# 6) Delete query (DELETE /query/{query_id})
 # -------------------------------
 @router.delete("/{query_id}", status_code=status.HTTP_200_OK)
 def delete_query(
@@ -404,7 +362,7 @@ def delete_query(
 
 
 # -------------------------------
-# 6) Statistics (GET /query/stats)
+# 7) Statistics (GET /query/stats)
 # -------------------------------
 @router.get("/stats")
 def get_query_stats(
@@ -414,41 +372,23 @@ def get_query_stats(
     """
     Return:
       - total_queries
-      - avg_rating (try numeric column first, fallback to sources.feedback)
+      - avg_rating (✅ LẤY TỪ BẢNG FEEDBACKS)
       - activity_last_7_days (list of {date, count})
     """
-    # total
+    # Total queries
     total_q = db.query(func.count(QueryModel.id)).filter(QueryModel.user_id == current_user.id).scalar() or 0
 
-    # try numeric avg rating from column (fast), else fallback to scanning sources JSON
+    # ✅ Tính avg_rating từ bảng FEEDBACKS
     avg_rating = 0.0
     try:
-        avg = db.query(func.avg(QueryModel.rating)).filter(
-            QueryModel.user_id == current_user.id,
-            QueryModel.rating.isnot(None),
+        avg = db.query(func.avg(Feedback.rating)).filter(
+            Feedback.user_id == current_user.id
         ).scalar()
         avg_rating = round(float(avg), 2) if avg is not None else 0.0
     except Exception:
-        # fallback: scan JSON
-        records = (
-            db.query(QueryModel)
-            .filter(QueryModel.user_id == current_user.id)
-            .filter(QueryModel.sources.isnot(None))
-            .all()
-        )
-        ratings = []
-        for r in records:
-            src = r.sources
-            if isinstance(src, dict):
-                fb = src.get("feedback")
-                if isinstance(fb, dict) and "rating" in fb:
-                    try:
-                        ratings.append(int(fb["rating"]))
-                    except Exception:
-                        pass
-        avg_rating = round(sum(ratings) / len(ratings), 2) if ratings else 0.0
+        avg_rating = 0.0
 
-    # daily counts last 7 days (UTC)
+    # Daily counts last 7 days (UTC)
     now = datetime.utcnow()
     start_dt = datetime.combine((now.date() - timedelta(days=6)), time.min)
 
@@ -463,7 +403,6 @@ def get_query_stats(
         )
         daily_map = {row.d: int(row.cnt) for row in daily_counts}
     except Exception:
-        # DB might not support cast(...) - fallback to zeroes
         daily_map = {}
 
     activity = []
