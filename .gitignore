@@ -36,6 +36,7 @@ frontend/.env.production.local
 # ===============================
 backend/venv/
 backend/.venv/
+backend/venv_support/
 backend/env/
 backend/__pycache__/
 backend/.pytest_cache/

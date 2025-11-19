@@ -8,10 +8,11 @@ from alembic import context
 import sys
 from pathlib import Path
 
+# Add parent directory to path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from app.database import Base
-from app.config import settings
+from app.config import settings 
 from app.models.user import User
 from app.models.document import Document, Query
 
@@ -26,9 +27,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = Base.metadata  # ===== THAY ĐỔI =====
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -68,7 +67,7 @@ def run_migrations_online() -> None:
 
     """
     configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = settings.DATABASE_URL
+    configuration["sqlalchemy.url"] = settings.DATABASE_URL  # Đọc từ environment variable
     
     connectable = engine_from_config(
         configuration,  

@@ -10,7 +10,11 @@ pip install -r requirements.txt
 echo "📁 Creating uploads directory..."
 mkdir -p uploads
 
+echo "🗑️ Resetting database..."
+python reset_db.py
+
 echo "🗄️ Running database migrations..."
 alembic upgrade head
+cd ..
 
 echo "✅ Build completed successfully!"
