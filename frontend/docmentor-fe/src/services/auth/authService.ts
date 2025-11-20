@@ -24,14 +24,10 @@ interface RegisterData {
 }
 
 const api = axios.create({
-  // LƯU Ý: Frontend của bạn đang dùng baseURL: "/api".
-  // Nếu bạn đang dùng Vite dev server, nó phải được proxy tới localhost:8000
-  // Nếu không có proxy, bạn nên set baseURL là "http://localhost:8000"
-  baseURL: "/api",
+  baseURL: (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:8000",
   headers: {
     "Content-Type": "application/json",
-  }, // Đã giải quyết lỗi CORS trước đó bằng withCredentials: true (nếu cần cho các request khác)
-  // Nếu chỉ dùng Bearer Token, bạn không cần withCredentials ở đây
+  }, 
 });
 
 api.interceptors.request.use((config) => {

@@ -81,7 +81,7 @@ class QueryApiService {
 
   constructor() {
     this.apiBaseUrl =
-      (import.meta as any).env?.VITE_API_URL || "http://localhost:8000";
+      (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:8000";
 
     this.axiosInstance = axios.create({
       baseURL: this.apiBaseUrl,
