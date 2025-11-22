@@ -1,22 +1,31 @@
 //============================================
-// ChatInput.tsx - UPDATED
+// ChatInput.tsx - UPDATED Logic for ChatContainer Integration
 // ============================================
 import React, { useState, useRef } from "react";
 import Button from "@/components/common/Button";
 
 interface ChatInputProps {
-  onSendMessage: (message: string, file?: File) => void;
+  // Cập nhật signature để phù hợp với cách ChatContainer gọi
+  onSendMessage: (message: string) => void;
   isLoading: boolean;
   onOpenDocumentModal?: () => void;
+
+  // ✨ THÊM: Props để nhận state file từ ChatContainer
+  onFileSelect?: (file: File) => void;
+  selectedFile?: File | null;
+  onClearFile?: () => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage,
   isLoading,
   onOpenDocumentModal,
+  onFileSelect,
+  selectedFile, // Nhận từ props thay vì state nội bộ
+  onClearFile,
 }) => {
   const [inputValue, setInputValue] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // ❌ Đã xóa state selectedFile nội bộ để dùng props
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -24,8 +33,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
+      // ✨ GỌI Callback của cha thay vì set state nội bộ
+      if (onFileSelect) {
+        onFileSelect(file);
+      }
       setIsMenuOpen(false);
+    }
+    // Reset value để cho phép chọn lại cùng file
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -34,7 +50,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const handleClearFile = () => {
-    setSelectedFile(null);
+    // ✨ GỌI Callback của cha
+    if (onClearFile) {
+      onClearFile();
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -63,15 +82,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Kiểm tra selectedFile từ props
     if ((inputValue.trim() || selectedFile) && !isLoading) {
-      onSendMessage(inputValue.trim(), selectedFile || undefined);
+      // ChatContainer đã nắm giữ selectedFile, nên chỉ cần gửi text
+      onSendMessage(inputValue.trim());
       setInputValue("");
-      handleClearFile();
+      // Không cần gọi handleClearFile() ở đây vì ChatContainer sẽ tự reset file sau khi gửi thành công
     }
   };
 
   return (
     <div className="border-t border-primary/20 bg-accent/40 backdrop-blur-sm p-4">
+      {/* Sử dụng selectedFile từ props để hiển thị */}
       {selectedFile && (
         <div className="mb-2 px-3 py-2 bg-accent/80 rounded-lg flex justify-between items-center text-sm animate-fade-in">
           <span className="truncate text-white/80">

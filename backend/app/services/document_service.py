@@ -4,6 +4,8 @@ from fastapi import HTTPException, status, UploadFile
 from typing import List, Dict, Optional
 import os
 import shutil
+import logging
+
 from ..models.document import Document
 from ..models.user import User
 from ..schemas.document import DocumentResponse, DocumentStats
@@ -14,6 +16,8 @@ from ..utils.helpers import (
     ensure_upload_dir,
     calculate_file_hash
 )
+
+logger = logging.getLogger(__name__)
 
 class DocumentService:
     @staticmethod
@@ -49,19 +53,27 @@ class DocumentService:
         # Calculate file hash
         file_hash = calculate_file_hash(file_path)
         
-        # Check for duplicate uploads based on file hash
-        existing_doc = db.query(Document).filter(
-            Document.user_id == user.id,
-            Document.metadata_["file_hash"].as_string() == file_hash
-        ).first()
-        
-        if existing_doc:
-            # Remove duplicate file
-            os.remove(file_path)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This file has already been uploaded"
-            )
+        # Check for duplicate uploads - handle NULL metadata safely
+        try:
+            # Query all user documents and check in Python (safer than JSON query)
+            existing_docs = db.query(Document).filter(
+                Document.user_id == user.id
+            ).all()
+            
+            for doc in existing_docs:
+                if doc.metadata_ and doc.metadata_.get("file_hash") == file_hash:
+                    # Remove duplicate file
+                    os.remove(file_path)
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="This file has already been uploaded"
+                    )
+        except HTTPException:
+            # Re-raise HTTPException (duplicate file)
+            raise
+        except Exception as e:
+            # Log error but don't block upload if duplicate check fails
+            logger.warning(f"Could not check for duplicate files: {str(e)}")
         
         # Create Document record
         document = Document(

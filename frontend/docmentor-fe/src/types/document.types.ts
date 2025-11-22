@@ -1,11 +1,31 @@
-// Document types
-export interface Document {
-  id: string;
-  title: string;
-  type: "pdf" | "docx" | "txt" | "pptx"; // Các loại file hỗ trợ
+// src/types/document.types.ts
 
-  uploadDate: string; // Sử dụng ISO string format (e.g., "2025-10-23T14:00:00.000Z")
-  fileSize: number; // Kích thước file tính bằng bytes
-  summary: string;
-  thumbnailUrl?: string; // URL ảnh thumbnail (tùy chọn)
+export interface Document {
+  id: string | number; // ✨ Accept both string and number from API
+  title: string;
+  type: string; // pdf, docx, txt, pptx, etc.
+  fileSize: number; // bytes
+  uploadDate: string; // ISO datetime
+  status: "ready" | "processing" | "failed";
+
+  // Optional fields from API
+  file_path?: string;
+  processed?: boolean;
+  metadata?: Record<string, any>;
+  user_id?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DocumentFilter {
+  type?: string;
+  sortBy?: "date_desc" | "date_asc" | "title_asc" | "size_asc" | "size_desc";
+}
+
+export interface DocumentStats {
+  total_documents: number;
+  total_size: number;
+  by_type: Record<string, number>;
+  processed_count: number;
+  unprocessed_count: number;
 }

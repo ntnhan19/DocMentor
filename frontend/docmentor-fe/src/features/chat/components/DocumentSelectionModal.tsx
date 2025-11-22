@@ -1,6 +1,4 @@
-// ============================================
-// DocumentSelectionModal.tsx - MỚI
-// ============================================
+// src/features/chat/components/DocumentSelectionModal.tsx - FIXED
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiSearch, FiCheck, FiArrowLeft } from "react-icons/fi";
@@ -24,7 +22,7 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
 }) => {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
+  const [selectedDocIds, setSelectedDocIds] = useState<(string | number)[]>([]); // ✨ Accept both types
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,10 +54,10 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
     }
   };
 
-  const handleToggleDocument = (docId: string) => {
+  const handleToggleDocument = (docId: string | number) => {
     setSelectedDocIds((prev) =>
-      prev.includes(docId)
-        ? prev.filter((id) => id !== docId)
+      prev.some((id) => String(id) === String(docId)) // ✨ Convert to string for comparison
+        ? prev.filter((id) => String(id) !== String(docId))
         : [...prev, docId]
     );
   };
@@ -73,18 +71,22 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
   };
 
   const handleConfirm = () => {
-    const selected = documents.filter((doc) => selectedDocIds.includes(doc.id));
+    const selected = documents.filter(
+      (doc) => selectedDocIds.some((id) => String(id) === String(doc.id)) // ✨ Safe comparison
+    );
     onDocumentsSelected(
       selected.map((doc) => ({
-        id: doc.id,
+        id: String(doc.id), // ✨ Convert to string
         title: doc.title,
       }))
     );
   };
 
   const handleNavigateToDocuments = () => {
-    // Lưu selected docs vào localStorage tạm thời
-    localStorage.setItem("selectedDocIds", JSON.stringify(selectedDocIds));
+    localStorage.setItem(
+      "selectedDocIds",
+      JSON.stringify(selectedDocIds.map((id) => String(id)))
+    );
     navigate("/user/documents");
     onClose();
   };
@@ -174,18 +176,20 @@ export const DocumentSelectionModal: React.FC<DocumentSelectionModalProps> = ({
               {/* Document Items */}
               {documents.map((doc) => (
                 <div
-                  key={doc.id}
+                  key={String(doc.id)} // ✨ Ensure string key
                   onClick={() => handleToggleDocument(doc.id)}
                   className="p-3 bg-accent/80 border border-primary/20 rounded-lg cursor-pointer hover:bg-accent/90 transition-colors flex items-center gap-3"
                 >
                   <div
                     className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                      selectedDocIds.includes(doc.id)
+                      selectedDocIds.some((id) => String(id) === String(doc.id)) // ✨ Safe comparison
                         ? "bg-primary border-primary"
                         : "border-primary/50 hover:border-primary"
                     }`}
                   >
-                    {selectedDocIds.includes(doc.id) && (
+                    {selectedDocIds.some(
+                      (id) => String(id) === String(doc.id)
+                    ) && ( // ✨ Safe comparison
                       <FiCheck className="w-4 h-4 text-white" />
                     )}
                   </div>

@@ -1,4 +1,3 @@
-// src/services/auth/authService.ts
 import axios from "axios";
 
 interface User {
@@ -16,11 +15,19 @@ interface LoginResponse {
   message?: string;
 }
 
+// 👈 ĐÃ THÊM: Định nghĩa interface cho dữ liệu đăng ký
+interface RegisterData {
+  fullName: string;
+  email: string;
+  username: string;
+  password: string;
+}
+
 const api = axios.create({
-  baseURL: "/api", 
+  baseURL: (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:8000",
   headers: {
     "Content-Type": "application/json",
-  },
+  }, 
 });
 
 api.interceptors.request.use((config) => {
@@ -36,9 +43,8 @@ class RealAuthService {
   // Simulate delay nếu cần (optional, backend thực không cần)
   private delay(ms: number = 0): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+  } // Real login: Gọi POST /api/auth/login
 
-  // Real login: Gọi POST /api/auth/login
   async login(
     email: string,
     password: string,
@@ -61,9 +67,8 @@ class RealAuthService {
         );
       }
 
-      const { user, token, message } = response.data;
+      const { user, token, message } = response.data; // Store in localStorage or sessionStorage
 
-      // Store in localStorage or sessionStorage
       const storage = rememberMe ? localStorage : sessionStorage;
       storage.setItem("auth_token", token);
       storage.setItem("user", JSON.stringify(user));
@@ -76,28 +81,41 @@ class RealAuthService {
 
       return { success: true, user, token, message };
     } catch (error: any) {
-      console.error("❌ Real login error:", error);
+      console.error("❌ Real login error:", error); // Lỗi 401: Unauthorized (mật khẩu sai) sẽ được bắt ở đây
       throw new Error(error.response?.data?.message || "Lỗi đăng nhập");
     }
-  }
+  } // 👈 ĐÃ THÊM: Hàm đăng ký thực tế
+  async register(data: RegisterData): Promise<void> {
+    console.log("📝 Real registration attempt:", data.email);
+    try {
+      await this.delay(500); // Optional delay
+      // Backend API: POST /auth/register trả về Token, nhưng ở đây ta chỉ cần nó thành công
+      await api.post("/auth/register", data);
+      console.log("✅ Real registration successful");
+    } catch (error: any) {
+      console.error("❌ Real registration error:", error); // Lỗi 409 Conflict (Email đã tồn tại) hoặc 422 (Validation) sẽ bị bắt ở đây
+      throw new Error(
+        error.response?.data?.detail?.[0]?.msg ||
+          error.response?.data?.detail ||
+          "Đăng ký thất bại"
+      );
+    }
+  } // Real logout: Gọi POST /api/auth/logout (optional), rồi clear storage
 
-  // Real logout: Gọi POST /api/auth/logout (optional), rồi clear storage
   async logout(): Promise<void> {
     console.log("🚪 Real logging out...");
     try {
       await api.post("/auth/logout"); // Nếu backend có endpoint này
     } catch (error) {
       console.log("⚠️ Logout API failed, but clearing local storage");
-    }
-    // Clear storage anyway
+    } // Clear storage anyway
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user");
     sessionStorage.removeItem("auth_token");
     sessionStorage.removeItem("user");
     console.log("✅ Real logout complete");
-  }
+  } // Check authenticated: Dùng token hoặc gọi /api/auth/me
 
-  // Check authenticated: Dùng token hoặc gọi /api/auth/me
   async isAuthenticated(): Promise<boolean> {
     const token = this.getToken();
     if (!token) {
@@ -114,9 +132,8 @@ class RealAuthService {
       this.logout(); // Clear nếu token hết hạn
       return false;
     }
-  }
+  } // Get current user: Lấy từ storage hoặc gọi /api/auth/me nếu cần fresh
 
-  // Get current user: Lấy từ storage hoặc gọi /api/auth/me nếu cần fresh
   async getCurrentUser(): Promise<User | null> {
     const userStr =
       localStorage.getItem("user") || sessionStorage.getItem("user");
@@ -133,9 +150,8 @@ class RealAuthService {
       console.error("❌ Error parsing user data:", error);
       return null;
     }
-  }
+  } // Get token
 
-  // Get token
   getToken(): string | null {
     return (
       localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token")
@@ -144,4 +160,4 @@ class RealAuthService {
 }
 
 export const realAuthService = new RealAuthService();
-export type { User, LoginResponse };
+export type { User, LoginResponse, RegisterData }; // 👈 ĐÃ THÊM: Export RegisterData
