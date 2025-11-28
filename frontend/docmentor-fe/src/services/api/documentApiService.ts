@@ -1,5 +1,3 @@
-// src/services/api/documentApiService.ts - Real API Service for Documents
-
 import axios, { AxiosInstance } from "axios";
 
 // ============================================================
@@ -60,8 +58,10 @@ class DocumentApiService {
   private apiBaseUrl: string;
 
   constructor() {
+    // ✨ FIX: Thay đổi giá trị mặc định (||) thành URL đã deploy
     this.apiBaseUrl =
-      (import.meta as any).env?.VITE_API_URL || "http://localhost:8000";
+      (import.meta as any).env?.VITE_API_URL ||
+      "https://docmentor-api.onrender.com";
 
     this.axiosInstance = axios.create({
       baseURL: this.apiBaseUrl,
@@ -69,9 +69,8 @@ class DocumentApiService {
       headers: {
         "Content-Type": "application/json",
       },
-    });
+    }); // ✨ Request Interceptor - Add Auth Token
 
-    // ✨ Request Interceptor - Add Auth Token
     this.axiosInstance.interceptors.request.use(
       (config) => {
         const token = this.getAuthToken();
@@ -84,9 +83,8 @@ class DocumentApiService {
         console.error("Request interceptor error:", error);
         return Promise.reject(error);
       }
-    );
+    ); // ✨ Response Interceptor - Handle Errors
 
-    // ✨ Response Interceptor - Handle Errors
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error: any) => {
@@ -107,9 +105,7 @@ class DocumentApiService {
         return Promise.reject(apiError);
       }
     );
-  }
-
-  // ============================================================
+  } // ============================================================
   // HELPER METHODS
   // ============================================================
 
@@ -128,15 +124,13 @@ class DocumentApiService {
       message: "An unknown error occurred",
       detail: error.message,
     };
-  }
-
-  // ============================================================
+  } // ============================================================
   // DOCUMENT OPERATIONS
   // ============================================================
-
   /**
    * 📄 Upload a document
    */
+
   async uploadDocument(
     file: File,
     title?: string
@@ -155,7 +149,7 @@ class DocumentApiService {
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data",
+            "Content-Type": "multipart/form-form-data",
           },
         }
       );
@@ -166,11 +160,10 @@ class DocumentApiService {
       console.error("❌ Upload document failed:", error);
       this.handleError(error);
     }
-  }
-
-  /**
+  } /**
    * 📋 Get user documents with filters
    */
+
   async getDocuments(filters?: DocumentFilters): Promise<DocumentListResponse> {
     try {
       console.log("📤 Fetching documents:", filters);
@@ -194,11 +187,10 @@ class DocumentApiService {
       console.error("❌ Fetch documents failed:", error);
       this.handleError(error);
     }
-  }
-
-  /**
+  } /**
    * 🔍 Get single document
    */
+
   async getDocument(documentId: string): Promise<DocumentResponse> {
     try {
       console.log("📤 Fetching document:", documentId);
@@ -213,11 +205,10 @@ class DocumentApiService {
       console.error("❌ Fetch document failed:", error);
       this.handleError(error);
     }
-  }
-
-  /**
+  } /**
    * ✏️ Update document (title, metadata)
    */
+
   async updateDocument(
     documentId: string,
     title?: string,
@@ -240,11 +231,10 @@ class DocumentApiService {
       console.error("❌ Update document failed:", error);
       this.handleError(error);
     }
-  }
-
-  /**
+  } /**
    * 🗑️ Delete document
    */
+
   async deleteDocument(documentId: string): Promise<void> {
     try {
       console.log("📤 Deleting document:", documentId);
@@ -256,11 +246,10 @@ class DocumentApiService {
       console.error("❌ Delete document failed:", error);
       this.handleError(error);
     }
-  }
-
-  /**
+  } /**
    * 📊 Get document statistics
    */
+
   async getDocumentStats(): Promise<DocumentStatsResponse> {
     try {
       console.log("📤 Fetching document stats");
@@ -274,15 +263,13 @@ class DocumentApiService {
       console.error("❌ Fetch stats failed:", error);
       this.handleError(error);
     }
-  }
-
-  // ============================================================
+  } // ============================================================
   // UTILITY METHODS
   // ============================================================
-
   /**
    * Set auth token (call after login)
    */
+
   setAuthToken(token: string, persistent: boolean = false): void {
     if (persistent) {
       localStorage.setItem("auth_token", token);
@@ -291,19 +278,17 @@ class DocumentApiService {
       sessionStorage.setItem("auth_token", token);
       localStorage.removeItem("auth_token");
     }
-  }
-
-  /**
+  } /**
    * Clear auth token (call on logout)
    */
+
   clearAuthToken(): void {
     localStorage.removeItem("auth_token");
     sessionStorage.removeItem("auth_token");
-  }
-
-  /**
+  } /**
    * Get axios instance for advanced usage
    */
+
   getAxiosInstance(): AxiosInstance {
     return this.axiosInstance;
   }

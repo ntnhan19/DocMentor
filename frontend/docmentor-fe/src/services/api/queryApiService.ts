@@ -80,8 +80,10 @@ class QueryApiService {
   private apiBaseUrl: string;
 
   constructor() {
+    // ✨ FIX: Thay đổi giá trị mặc định (||) thành URL đã deploy
     this.apiBaseUrl =
-      (import.meta as any).env?.VITE_API_URL || "http://localhost:8000";
+      (import.meta as any).env?.VITE_API_URL ||
+      "https://docmentor-api.onrender.com";
 
     this.axiosInstance = axios.create({
       baseURL: this.apiBaseUrl,
@@ -90,9 +92,8 @@ class QueryApiService {
         "Content-Type": "application/json",
       },
       withCredentials: true,
-    });
+    }); // ✨ Request Interceptor - Add Auth Token
 
-    // ✨ Request Interceptor - Add Auth Token
     this.axiosInstance.interceptors.request.use(
       (config) => {
         const token = this.getAuthToken();
@@ -105,9 +106,8 @@ class QueryApiService {
         console.error("Request interceptor error:", error);
         return Promise.reject(error);
       }
-    );
+    ); // ✨ Response Interceptor - Handle Errors
 
-    // ✨ Response Interceptor - Handle Errors
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error: AxiosError) => {
@@ -118,12 +118,10 @@ class QueryApiService {
             (error.response?.data as any)?.detail || error.response?.statusText,
         };
 
-        console.error("API Error:", apiError);
+        console.error("API Error:", apiError); // Handle 401 Unauthorized
 
-        // Handle 401 Unauthorized
         if (error.response?.status === 401) {
-          console.warn("Unauthorized: redirecting to login");
-          // TODO: Redirect to login page
+          console.warn("Unauthorized: redirecting to login"); // TODO: Redirect to login page
           localStorage.removeItem("auth_token");
           sessionStorage.removeItem("auth_token");
         }
@@ -131,9 +129,7 @@ class QueryApiService {
         return Promise.reject(apiError);
       }
     );
-  }
-
-  // ============================================================
+  } // ============================================================
   // HELPER METHODS
   // ============================================================
 
@@ -152,15 +148,13 @@ class QueryApiService {
       message: "An unknown error occurred",
       detail: error.message,
     };
-  }
-
-  // ============================================================
+  } // ============================================================
   // QUERY OPERATIONS
   // ============================================================
-
   /**
    * 📝 Send a query to AI/RAG service
    */
+
   async sendQuery(
     queryText: string,
     documentIds: number[],
@@ -181,11 +175,10 @@ class QueryApiService {
       console.error("❌ Send query failed:", error);
       this.handleError(error);
     }
-  }
-
-  /**
+  } /**
    * 📋 Get query history with filters and pagination
    */
+
   async getQueryHistory(params?: HistoryParams): Promise<QueryHistory> {
     try {
       console.log("📤 Fetching query history:", params);
@@ -211,11 +204,10 @@ class QueryApiService {
       console.error("❌ Fetch history failed:", error);
       this.handleError(error);
     }
-  }
-
-  /**
+  } /**
    * 🔍 Get details of a single query
    */
+
   async getQueryDetail(queryId: number): Promise<QueryResponse> {
     try {
       console.log("📤 Fetching query detail:", queryId);
@@ -230,11 +222,10 @@ class QueryApiService {
       console.error("❌ Fetch query detail failed:", error);
       this.handleError(error);
     }
-  }
-
-  /**
+  } /**
    * 🗑️ Delete a query
    */
+
   async deleteQuery(
     queryId: number
   ): Promise<{ message: string; deleted_id: number }> {
@@ -252,20 +243,17 @@ class QueryApiService {
       console.error("❌ Delete query failed:", error);
       this.handleError(error);
     }
-  }
-
-  // ============================================================
+  } // ============================================================
   // FEEDBACK OPERATIONS
   // ============================================================
-
   /**
    * ⭐ Submit feedback/rating for a query
    */
+
   async submitFeedback(feedback: QueryFeedbackCreate): Promise<any> {
     try {
-      console.log("📤 Submitting feedback:", feedback);
+      console.log("📤 Submitting feedback:", feedback); // Validate rating
 
-      // Validate rating
       if (feedback.rating < 1 || feedback.rating > 5) {
         throw {
           status: 422,
@@ -286,11 +274,10 @@ class QueryApiService {
       console.error("❌ Submit feedback failed:", error);
       this.handleError(error);
     }
-  }
-
-  /**
+  } /**
    * 📖 Get feedback for a query
    */
+
   async getFeedback(queryId: number): Promise<QueryFeedbackResponse | null> {
     try {
       console.log("📤 Fetching feedback for query:", queryId);
@@ -310,15 +297,13 @@ class QueryApiService {
       console.error("❌ Fetch feedback failed:", error);
       this.handleError(error);
     }
-  }
-
-  // ============================================================
+  } // ============================================================
   // STATISTICS
   // ============================================================
-
   /**
    * 📊 Get query statistics
    */
+
   async getQueryStats(): Promise<QueryStatsResponse> {
     try {
       console.log("📤 Fetching query stats");
@@ -332,15 +317,13 @@ class QueryApiService {
       console.error("❌ Fetch stats failed:", error);
       this.handleError(error);
     }
-  }
-
-  // ============================================================
+  } // ============================================================
   // UTILITY METHODS
   // ============================================================
-
   /**
    * Set auth token (call this after login)
    */
+
   setAuthToken(token: string, persistent: boolean = false): void {
     if (persistent) {
       localStorage.setItem("auth_token", token);
@@ -349,19 +332,17 @@ class QueryApiService {
       sessionStorage.setItem("auth_token", token);
       localStorage.removeItem("auth_token");
     }
-  }
-
-  /**
+  } /**
    * Clear auth token (call this on logout)
    */
+
   clearAuthToken(): void {
     localStorage.removeItem("auth_token");
     sessionStorage.removeItem("auth_token");
-  }
-
-  /**
+  } /**
    * Get axios instance for advanced usage
    */
+
   getAxiosInstance(): AxiosInstance {
     return this.axiosInstance;
   }
