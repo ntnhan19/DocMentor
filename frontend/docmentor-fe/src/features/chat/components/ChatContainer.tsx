@@ -158,30 +158,78 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
 
       const title = messageText.substring(0, 50) || "Cuộc trò chuyện mới";
 
-      // 3. Gọi Service tạo hội thoại
-      // Lưu ý: chatService.createNewConversation đã bao gồm việc gửi query đầu tiên và chờ AI trả lời
-      const newConv = await chatService.createNewConversation({
+      // 3. Tạo cuộc trò chuyện RỖNG trước (Để lấy ID)
+      const newConvResponse = await chatService.createEmptyConversation({
         title,
-        initialMessage: messageText,
         documentIds: docIds.map(String),
       });
 
-      if (!newConv || !newConv.id)
+      if (!newConvResponse || !newConvResponse.id)
         throw new Error("Failed to create conversation");
 
-      // 4. Lấy dữ liệu thật ngay lập tức (Bao gồm cả trích dẫn vừa tạo)
-      const history = await chatService.getChatHistory(newConv.id);
-      setMessages(history);
-
-      // 5. Cập nhật Sidebar & Điều hướng URL
+      // Cập nhật Sidebar & Điều hướng URL ngay lập tức
       if (onNewConversation) {
-        onNewConversation(newConv);
+        onNewConversation(newConvResponse);
       }
+      navigate(`/user/chat/${newConvResponse.id}`, { replace: true });
 
-      // replace: true để thay thế lịch sử duyệt web, tránh user back lại trang trống
-      navigate(`/user/chat/${newConv.id}`, { replace: true });
+      // 4. Thực hiện STREAMING cho câu hỏi đầu tiên
+      let accumulatedText = "";
 
-      // Mở khóa ref sau 1s để ổn định
+      await queryApiService.sendQueryStream(
+        messageText,
+        docIds,
+        (data) => {
+          if (data.is_processing) {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === tempAiMsgId
+                  ? { ...msg, text: "DocMentor đang học tài liệu... ⏳", status: "loading" }
+                  : msg
+              )
+            );
+            return;
+          }
+
+          if (data.chunk) {
+            accumulatedText += data.chunk;
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === tempAiMsgId
+                  ? { ...msg, text: accumulatedText, status: "sent" }
+                  : msg
+              )
+            );
+          }
+
+          if (data.is_done) {
+            const mappedSources = (data.sources || []).map((s: any) => ({
+              documentId: s.documentId ?? s.document_id ?? String(s.source_id ?? ""),
+              documentTitle: s.documentTitle ?? s.document_title ?? s.title ?? "Tài liệu",
+              pageNumber: s.pageNumber ?? s.page_number,
+              similarityScore: s.similarityScore ?? s.similarity_score ?? s.score,
+              text: s.text,
+            }));
+
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === tempAiMsgId
+                  ? { 
+                      ...msg, 
+                      id: `msg-ai-${data.query_id}`, 
+                      text: data.answer || accumulatedText, 
+                      sources: mappedSources,
+                      status: "sent" 
+                    }
+                  : msg
+              )
+            );
+          }
+        },
+        parseInt(newConvResponse.id, 10)
+      );
+
+      // Mở khóa sau 1s
       setTimeout(() => {
         isCreatingRef.current = false;
       }, 1000);
@@ -196,12 +244,12 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   };
 
   // ============================================================
-  // 3. HANDLE SEND MESSAGE (Gửi tin nhắn thông thường)
+  // 3. HANDLE SEND MESSAGE (Gửi tin nhắn thông thường - STREAMING)
   // ============================================================
   const handleSendMessage = async (messageText: string, file?: File) => {
     if ((!messageText.trim() && !file) || isReplying) return;
 
-    // Nếu chưa có ID -> Chuyển sang luồng tạo mới
+    // Nếu chưa có ID -> Chuyển sang luồng tạo mới (Cũng sẽ dùng streaming)
     if (!contextId || contextId.startsWith("temp-")) {
       await handleCreateNewConversation(messageText, file);
       return;
@@ -210,9 +258,12 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     setIsReplying(true);
     const currentConvId = parseInt(contextId, 10);
 
-    // 1. Optimistic UI
+    // 1. Optimistic UI: Tạo tin nhắn user và placeholder cho AI
+    const userMessageId = `msg-user-${Date.now()}`;
+    const aiMessageId = `msg-ai-temp-${Date.now()}`;
+
     const userMessage: ChatMessage = {
-      id: `msg-user-${Date.now()}`,
+      id: userMessageId,
       text: messageText,
       sender: "user",
       timestamp: new Date().toISOString(),
@@ -225,7 +276,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     };
 
     const aiPlaceholder: ChatMessage = {
-      id: `msg-ai-temp-${Date.now()}`,
+      id: aiMessageId,
       text: "",
       sender: "ai",
       timestamp: new Date().toISOString(),
@@ -235,7 +286,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
     setMessages((prev) => [...prev, userMessage, aiPlaceholder]);
 
     try {
-      // 2. Upload file & Prepare IDs
+      // 2. Upload file & Prepare IDs (nếu có)
       let uploadedDocId = null;
       if (file) {
         const doc = await documentService.uploadDocument(file, file.name);
@@ -246,68 +297,84 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         .filter((id) => !isNaN(id));
       if (uploadedDocId) docIds.push(parseInt(String(uploadedDocId)));
 
-      // 3. Gửi câu hỏi
-      const response = await queryApiService.sendQuery(
+      // 3. Thực hiện STREAMING từ API
+      let accumulatedText = "";
+
+      await queryApiService.sendQueryStream(
         messageText,
         docIds,
-        5,
+        (data) => {
+          // XỬ LÝ TỪNG CHUNK DỮ LIỆU
+          if (data.is_processing) {
+            // Trường hợp tài liệu đang được học
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === aiMessageId
+                  ? { ...msg, text: "DocMentor đang nạp tài liệu vào bộ nhớ để trả lời chính xác nhất... ⏳", status: "loading" }
+                  : msg
+              )
+            );
+            
+            setTimeout(() => {
+              handleSendMessage(messageText, undefined); // Thử lại sau 4s
+            }, 4000);
+            return;
+          }
+
+          if (data.chunk) {
+            accumulatedText += data.chunk;
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === aiMessageId
+                  ? { ...msg, text: accumulatedText, status: "sent" } // Hiển thị chữ chạy
+                  : msg
+              )
+            );
+          }
+
+          if (data.is_done) {
+            // Khi kết thúc: Cập nhật Sources và Query ID thật
+            const mappedSources = (data.sources || []).map((s: any) => ({
+              documentId: s.documentId ?? s.document_id ?? String(s.source_id ?? ""),
+              documentTitle: s.documentTitle ?? s.document_title ?? s.title ?? "Tài liệu",
+              pageNumber: s.pageNumber ?? s.page_number,
+              similarityScore: s.similarityScore ?? s.similarity_score ?? s.score,
+              text: s.text,
+            }));
+
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === aiMessageId
+                  ? { 
+                      ...msg, 
+                      id: `msg-ai-${data.query_id}`, 
+                      text: data.answer || accumulatedText, 
+                      sources: mappedSources,
+                      status: "sent" 
+                    }
+                  : msg
+              )
+            );
+            setIsReplying(false);
+          }
+        },
         currentConvId
       );
 
-      // 4. Kiểm tra xem có cần Auto-Retry không (Do tài liệu đang được học)
-      if (response.is_processing) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === aiPlaceholder.id
-              ? { ...msg, text: "DocMentor đang đọc tài liệu của bạn để đưa ra câu trả lời chính xác nhất... ⏳", status: "loading" }
-              : msg
-          )
-        );
-        
-        // Đợi 4 giây rồi thử lại chính câu hỏi này
-        setTimeout(() => {
-          handleSendMessage(messageText, undefined); // Không gửi lại file, chỉ gửi text
-        }, 4000);
-        return;
-      }
-
-      // 5. Map Sources (CamelCase)
-      const mappedSources = (response.sources || []).map((s: any) => ({
-        documentId: s.documentId ?? s.document_id ?? String(s.source_id ?? ""),
-        documentTitle: s.documentTitle ?? s.document_title ?? s.title ?? "Tài liệu",
-        pageNumber: s.pageNumber ?? s.page_number,
-        similarityScore: s.similarityScore ?? s.similarity_score ?? s.score,
-        text: s.text, // ✅ Nhận đoạn trích dẫn từ Backend
-      }));
-
-      // 6. Update State Hoàn tất
+      // Đánh dấu tin nhắn user đã gửi xong
       setMessages((prev) =>
-        prev.map((msg) => {
-          if (msg.id === aiPlaceholder.id) {
-            return {
-              ...msg,
-              id: `msg-ai-${response.query_id}`,
-              text: response.answer,
-              status: "sent",
-              sources: mappedSources,
-            };
-          }
-          if (msg.id === userMessage.id) return { ...msg, status: "sent" };
-          return msg;
-        })
+        prev.map((m) => (m.id === userMessageId ? { ...m, status: "sent" } : m))
       );
+
     } catch (error) {
       console.error("❌ Send message error:", error);
-      // Xóa loading bubble nếu lỗi
-      setMessages((prev) => prev.filter((m) => m.id !== aiPlaceholder.id));
-      // Đánh dấu tin nhắn user bị lỗi
+      setMessages((prev) => prev.filter((m) => m.id !== aiMessageId));
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === userMessage.id ? { ...m, status: "error" } : m
+          m.id === userMessageId ? { ...m, status: "error" } : m
         )
       );
-      alert("Lỗi gửi tin nhắn. Vui lòng thử lại.");
-    } finally {
+      alert("Cỗ máy AI đang bận hoặc gặp sự cố. Vui lòng thử lại.");
       setIsReplying(false);
     }
   };
@@ -320,7 +387,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   if (isLoading && !isCreatingRef.current) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <div className="w-10 h-10 border-4 rounded-full border-primary/30 border-t-primary animate-spin"></div>
+        <div className="w-12 h-12 border-[3px] rounded-full border-white/10 border-t-white animate-spin"></div>
       </div>
     );
   }

@@ -9,22 +9,15 @@ const UserLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* Decorative gradient backgrounds */}
+    <div className="relative min-h-screen overflow-hidden bg-black">
+      {/* Decorative subtle highlights (Low opacity white/gray instead of purple) */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-primary/15 rounded-full blur-3xl animate-float"></div>
-        <div
-          className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-secondary/10 rounded-full blur-3xl animate-float"
-          style={{ animationDelay: "1.5s" }}
-        ></div>
-        <div
-          className="absolute top-1/3 right-1/3 w-[300px] h-[300px] bg-primary/10 rounded-full blur-3xl animate-float"
-          style={{ animationDelay: "3s" }}
-        ></div>
+        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-white/[0.03] rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-white/[0.02] rounded-full blur-[100px]"></div>
       </div>
 
       {/* Header cố định */}
-      <div className="fixed top-0 left-0 right-0 z-40 border-b bg-background/80 backdrop-blur-xl border-primary/10">
+      <div className="fixed top-0 left-0 right-0 z-40">
         <Header hideAuthButtons={true} />
       </div>
 
@@ -44,7 +37,6 @@ const UserLayout: React.FC = () => {
               isOpen={isSidebarOpen}
               onClose={() => setIsSidebarOpen(false)}
             />
-            {/* ✅ Thêm lg:ml-72 để chừa chỗ cho Sidebar mới (width w-72) */}
             <main
               className={`flex-1 p-6 transition-all duration-300 ${isSidebarOpen ? "lg:ml-72" : ""}`}
             >
@@ -56,15 +48,15 @@ const UserLayout: React.FC = () => {
         )}
       </div>
 
-      {/* Decorative grid pattern overlay */}
+      {/* Decorative grid pattern overlay (Subtle Monochrome) */}
       <div
-        className="fixed inset-0 z-0 pointer-events-none opacity-5"
+        className="fixed inset-0 z-0 pointer-events-none opacity-[0.02]"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(138, 66, 255, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(138, 66, 255, 0.1) 1px, transparent 1px)
+            linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px)
           `,
-          backgroundSize: "50px 50px",
+          backgroundSize: "60px 60px",
         }}
       />
     </div>

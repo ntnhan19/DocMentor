@@ -33,32 +33,17 @@ export const MessageList: React.FC<MessageListProps> = ({
       ))}
 
       {isReplying && (
-        <div className="flex items-start justify-start gap-3 pl-1 animate-fade-in">
-          <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 shadow-lg rounded-xl bg-gradient-to-br from-primary to-secondary shadow-primary/30">
-            <svg
-              className="w-6 h-6 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-              />
-            </svg>
+        <div className="flex items-start justify-start gap-4 pl-2 animate-in fade-in duration-500">
+          {/* AI Avatar Placeholder - Minimalist */}
+          <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-xl bg-white shadow-xl shadow-white/5 border border-white/10 group">
+             <div className="w-2.5 h-2.5 bg-black rounded-full animate-pulse"></div>
           </div>
-          <div className="px-6 py-4 border rounded-tl-sm shadow-lg bg-accent/60 backdrop-blur-sm border-primary/20 rounded-2xl">
-            <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full shadow-lg bg-gradient-to-br from-indigo-500 to-purple-600">
-              ...
-            </div>
-            <div className="bg-[#1E1E2E] border border-white/10 rounded-2xl px-5 py-3">
-              <div className="flex gap-1">
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
-                ...
-              </div>
-            </div>
+
+          {/* Typing Indicator Box - Apple Glass */}
+          <div className="px-5 py-3.5 apple-glass border border-white/10 rounded-[22px] rounded-tl-none shadow-xl flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+            <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+            <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce"></span>
           </div>
         </div>
       )}

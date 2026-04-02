@@ -21,24 +21,23 @@ export const DocumentSearch: React.FC<DocumentSearchProps> = ({ onSearch }) => {
   };
 
   return (
-    <div className="relative w-full">
-      <label className="block text-xs font-semibold text-text-muted mb-2 uppercase tracking-wider"></label>
+    <div className="relative w-full group">
       <div className="relative">
-        <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" />
+        <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-white transition-colors pointer-events-none" />
         <input
           type="text"
           value={query}
           onChange={handleChange}
-          placeholder="Tìm kiếm tài liệu..."
-          className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-accent border border-primary/30 text-white placeholder-text-muted focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all hover:border-primary/50"
+          placeholder="Tìm kiếm trong thư viện..."
+          className="w-full pl-11 pr-11 py-3 rounded-2xl bg-white/[0.03] border border-white/5 text-[14px] text-white placeholder-white/20 focus:outline-none focus:bg-white/[0.06] focus:border-white/10 focus:ring-4 focus:ring-white/5 transition-all"
         />
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-muted hover:text-white transition-colors"
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/30 hover:text-white transition-all bg-white/10 hover:bg-white/20 rounded-full p-1"
             title="Xóa"
           >
-            <FiX className="w-5 h-5" />
+            <FiX className="w-3 h-3" />
           </button>
         )}
       </div>

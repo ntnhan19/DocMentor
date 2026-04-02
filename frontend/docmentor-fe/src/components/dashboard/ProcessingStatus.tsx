@@ -34,34 +34,34 @@ export const ProcessingStatus: React.FC = () => {
   if (processing.length === 0 && failed.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-2">
-      {/* Cột Đang Xử Lý */}
-      <div className="p-6 border bg-blue-500/5 border-blue-500/10 rounded-2xl backdrop-blur-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 text-blue-400 border rounded-lg bg-blue-500/10 border-blue-500/20">
+    <div className="grid grid-cols-1 gap-8 mb-10 lg:grid-cols-2">
+      {/* Cột Đang Xử Lý - Apple Glass */}
+      <div className="p-8 apple-glass border border-white/5 rounded-[24px] shadow-2xl relative overflow-hidden group">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="p-3 text-white border rounded-xl bg-white/10 border-white/10">
             <FiLoader className="w-5 h-5 animate-spin" />
           </div>
-          <h3 className="text-lg font-bold text-white">
-            Đang xử lý ({processing.length})
+          <h3 className="text-xl font-semibold tracking-tight text-white">
+            Đang xử lý <span className="ml-2 text-sm font-medium text-white/30">({processing.length})</span>
           </h3>
         </div>
 
         {processing.length === 0 ? (
-          <p className="py-4 text-sm italic text-center text-gray-500">
-            Hệ thống đang rảnh rỗi
+          <p className="py-10 text-[13px] font-medium text-center text-white/20 italic">
+            Hệ thống đang sẵn sàng cho tài liệu mới
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {processing.map((doc) => (
               <div
                 key={doc.id}
-                className="flex items-center justify-between p-3 bg-[#1A162D] rounded-xl border border-white/5"
+                className="flex items-center justify-between p-4 bg-white/[0.03] hover:bg-white/[0.06] rounded-2xl border border-white/5 transition-all group/item"
               >
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <span className="text-xs font-bold text-blue-400 uppercase border border-blue-500/30 px-1.5 py-0.5 rounded">
+                <div className="flex items-center gap-4 overflow-hidden">
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest border border-white/10 px-2 py-0.5 rounded-lg bg-white/5">
                     {doc.file_type}
                   </span>
-                  <span className="text-sm text-gray-300 truncate">
+                  <span className="text-[14px] font-medium text-white/90 truncate group-hover/item:text-white">
                     {doc.title}
                   </span>
                 </div>
@@ -71,34 +71,34 @@ export const ProcessingStatus: React.FC = () => {
         )}
       </div>
 
-      {/* Cột Lỗi */}
+      {/* Cột Lỗi - Apple Subtle Red */}
       {failed.length > 0 && (
-        <div className="p-6 border bg-red-500/5 border-red-500/10 rounded-2xl backdrop-blur-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 text-red-400 border rounded-lg bg-red-500/10 border-red-500/20">
+        <div className="p-8 bg-red-500/[0.02] border border-red-500/10 rounded-[24px] shadow-2xl relative overflow-hidden group">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="p-3 text-red-400 border rounded-xl bg-red-500/10 border-red-500/20">
               <FiAlertCircle className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold text-white">
-              Xử lý thất bại ({failed.length})
+            <h3 className="text-xl font-semibold tracking-tight text-white">
+              Xử lý thất bại <span className="ml-2 text-sm font-medium text-red-400/40">({failed.length})</span>
             </h3>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {failed.map((doc) => (
               <div
                 key={doc.id}
-                className="p-3 bg-[#1A162D] rounded-xl border border-red-500/20"
+                className="p-5 bg-white/[0.02] rounded-2xl border border-red-500/10 hover:border-red-500/30 transition-all"
               >
-                <div className="flex items-start justify-between mb-1">
-                  <span className="pr-2 text-sm font-medium text-gray-200 truncate">
+                <div className="flex items-start justify-between mb-3">
+                  <span className="pr-4 text-[14px] font-medium text-white/90 truncate">
                     {doc.title}
                   </span>
-                  <span className="text-[10px] text-red-400 uppercase border border-red-500/20 bg-red-500/5 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-red-400/60 uppercase tracking-widest border border-red-500/20 bg-red-500/5 px-2 py-0.5 rounded-lg">
                     {doc.file_type}
                   </span>
                 </div>
-                <p className="flex items-center gap-1.5 mt-2 text-xs text-red-400 bg-red-500/10 p-2 rounded-lg">
-                  <FiAlertCircle size={12} className="flex-shrink-0" />
+                <p className="flex items-center gap-2 mt-3 text-[12px] font-medium text-red-400/80 bg-red-500/10 p-3 rounded-xl border border-red-500/5">
+                  <FiAlertCircle size={14} className="flex-shrink-0" />
                   {doc.error || "Lỗi không xác định"}
                 </p>
               </div>

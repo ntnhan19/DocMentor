@@ -173,7 +173,7 @@ export const DocumentFilter: React.FC<DocumentFilterProps> = ({
               closeAllDropdowns();
               setIsTypeDropdownOpen(!isTypeDropdownOpen);
             }}
-            className="w-full px-3 py-2.5 rounded-lg bg-accent border border-primary/30 text-white hover:border-primary/50 transition-all flex items-center justify-between gap-2 font-medium hover:bg-accent/80 text-sm"
+            className="w-full px-4 py-2.5 rounded-xl apple-glass text-white hover:bg-white/10 transition-all flex items-center justify-between gap-2 font-medium text-sm"
           >
             <span className="truncate">{getTypeLabel()}</span>
             <ChevronDown
@@ -183,16 +183,16 @@ export const DocumentFilter: React.FC<DocumentFilterProps> = ({
           </button>
 
           {isTypeDropdownOpen && (
-            <div className="absolute top-full left-0 mt-2 w-full sm:w-48 bg-accent border border-primary/30 rounded-lg shadow-lg shadow-primary/20 z-50 overflow-hidden">
+            <div className="absolute top-full left-0 mt-2 w-full sm:w-56 apple-glass-heavy border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden p-1.5 animate-in slide-in-from-top-2 duration-300">
               {typeOptions.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => handleTypeChange(option.value)}
-                  className={`w-full px-4 py-2.5 text-left text-sm transition-all flex items-center gap-2 ${
+                  className={`w-full px-4 py-2 rounded-xl text-left text-sm transition-all flex items-center gap-2 ${
                     (option.value === "all" && !filters.type) ||
                     filters.type === option.value
-                      ? "bg-gradient-to-r from-primary to-secondary text-white"
-                      : "text-text-muted hover:text-white hover:bg-primary/20"
+                      ? "bg-white text-black font-bold"
+                      : "text-white/40 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <span>{option.label}</span>
@@ -233,16 +233,16 @@ export const DocumentFilter: React.FC<DocumentFilterProps> = ({
           </button>
 
           {isStatusDropdownOpen && (
-            <div className="absolute top-full left-0 mt-2 w-full sm:w-56 bg-accent border border-primary/30 rounded-lg shadow-lg shadow-primary/20 z-50 overflow-hidden">
+            <div className="absolute top-full left-0 mt-2 w-full sm:w-64 apple-glass-heavy border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden p-1.5 animate-in slide-in-from-top-2 duration-300">
               {statusOptions.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => handleStatusChange(option.value)}
-                  className={`w-full px-4 py-2.5 text-left text-sm transition-all flex items-center gap-2 ${
+                  className={`w-full px-4 py-2 rounded-xl text-left text-sm transition-all flex items-center gap-2 ${
                     (option.value === "all" && !filters.status) ||
                     filters.status === option.value
-                      ? "bg-gradient-to-r from-primary to-secondary text-white"
-                      : "text-text-muted hover:text-white hover:bg-primary/20"
+                      ? "bg-white text-black font-bold"
+                      : "text-white/40 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <span>{option.label}</span>
@@ -283,15 +283,15 @@ export const DocumentFilter: React.FC<DocumentFilterProps> = ({
           </button>
 
           {isDateDropdownOpen && (
-            <div className="absolute top-full left-0 mt-2 w-full sm:w-56 bg-accent border border-primary/30 rounded-lg shadow-lg shadow-primary/20 z-50 overflow-hidden">
+            <div className="absolute top-full left-0 mt-2 w-full sm:w-64 apple-glass-heavy border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden p-1.5 animate-in slide-in-from-top-2 duration-300">
               {dateOptions.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => handleDateChange(option.value)}
-                  className={`w-full px-4 py-2.5 text-left text-sm transition-all flex items-center gap-2 ${
+                  className={`w-full px-4 py-2 rounded-xl text-left text-sm transition-all flex items-center gap-2 ${
                     filters.dateRange === option.value
-                      ? "bg-gradient-to-r from-primary to-secondary text-white"
-                      : "text-text-muted hover:text-white hover:bg-primary/20"
+                      ? "bg-white text-black font-bold"
+                      : "text-white/40 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <span>{option.label}</span>
@@ -331,15 +331,15 @@ export const DocumentFilter: React.FC<DocumentFilterProps> = ({
           </button>
 
           {isSortDropdownOpen && (
-            <div className="absolute top-full left-0 mt-2 w-full sm:w-48 bg-accent border border-primary/30 rounded-lg shadow-lg shadow-primary/20 z-50 overflow-hidden">
+            <div className="absolute top-full left-0 mt-2 w-full sm:w-56 apple-glass-heavy border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden p-1.5 animate-in slide-in-from-top-2 duration-300">
               {sortOptions.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => handleSortChange(option.value)}
-                  className={`w-full px-4 py-2.5 text-left text-sm transition-all flex items-center gap-2 ${
+                  className={`w-full px-4 py-2 rounded-xl text-left text-sm transition-all flex items-center gap-2 ${
                     filters.sortBy === option.value
-                      ? "bg-gradient-to-r from-primary to-secondary text-white"
-                      : "text-text-muted hover:text-white hover:bg-primary/20"
+                      ? "bg-white text-black font-bold"
+                      : "text-white/40 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <span>{option.label}</span>
@@ -374,10 +374,9 @@ export const DocumentFilter: React.FC<DocumentFilterProps> = ({
             setFilters(resetFilters);
             onFilterChange(resetFilters);
           }}
-          className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-accent/50 border border-primary/20 text-text-muted hover:text-white hover:bg-accent hover:border-primary/50 transition-all font-medium text-sm hover:shadow-lg hover:shadow-primary/10 duration-300 flex items-center justify-center gap-2"
+          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-white/5 border border-white/5 text-white/40 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all font-bold text-[13px] uppercase tracking-widest active:scale-95 duration-300 flex items-center justify-center gap-2"
         >
-          <span>↺</span>
-          <span>Đặt lại</span>
+          <span>Đặt lại bộ lọc</span>
         </button>
       </div>
     </div>

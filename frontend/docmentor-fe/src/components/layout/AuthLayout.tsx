@@ -13,53 +13,40 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   subtitle,
 }) => {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0a0118] via-[#1a0b2e] to-[#0a0118] text-white relative overflow-hidden">
-      {/* Background Effects */}
+    <div className="min-h-screen flex flex-col bg-black text-white relative overflow-hidden">
+      {/* Background Effects (Subtle Monochrome) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Primary gradient */}
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-full opacity-20"
-          style={{
-            background:
-              "radial-gradient(circle at 50% 20%, #8A42FF 0%, transparent 60%)",
-          }}
-        />
-        {/* Secondary gradient */}
-        <div
-          className="absolute bottom-0 right-0 w-[100%] h-[100%] opacity-10"
-          style={{
-            background:
-              "radial-gradient(circle at 80% 80%, #6366f1 0%, transparent 50%)",
-          }}
-        />
-        {/* Grid pattern */}
+        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-white/[0.03] rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-white/[0.02] rounded-full blur-[100px]"></div>
+        
+        {/* Subtle Grid */}
         <div
           className="absolute inset-0 opacity-[0.02]"
           style={{
             backgroundImage: `
-              linear-gradient(rgba(138, 66, 255, 0.3) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(138, 66, 255, 0.3) 1px, transparent 1px)
+              linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px)
             `,
-            backgroundSize: "50px 50px",
+            backgroundSize: "60px 60px",
           }}
         />
       </div>
 
-      {/* Header - Fixed */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-xl border-primary/10">
-        <div className="container px-4 py-4 mx-auto">
+      {/* Header - Fixed & Apple Glass */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-20 flex items-center">
+        <div className="container px-6 mx-auto">
           <Link
             to="/"
             className="flex items-center gap-3 transition-opacity hover:opacity-80 w-fit"
           >
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white shadow-xl shadow-white/5">
               <img
                 src="/assets/logo.png"
                 alt="DocMentor"
-                className="object-contain w-10 h-10"
+                className="object-contain w-6 h-6 filter brightness-0"
               />
             </div>
-            <span className="text-2xl font-bold text-white">DocMentor</span>
+            <span className="text-2xl font-semibold tracking-tight text-white/90">DocMentor</span>
           </Link>
         </div>
       </header>
@@ -67,15 +54,15 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
       {/* Main Content - Scrollable */}
       <main className="relative z-10 flex items-center justify-center flex-1 px-4 py-20 overflow-y-auto">
         <div className="w-full max-w-md my-8">
-          {/* Card Container */}
-          <div className="p-6 space-y-5 text-gray-900 border shadow-2xl bg-white/95 backdrop-blur-sm rounded-2xl sm:p-8 border-gray-200/50">
+          {/* Card Container - Apple Glass Style */}
+          <div className="p-8 space-y-8 apple-glass border border-white/5 rounded-[32px] shadow-2xl">
             {/* Header */}
-            <div className="space-y-2 text-center">
-              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+            <div className="space-y-3 text-center">
+              <h1 className="text-3xl font-semibold tracking-tight text-white">
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-sm text-gray-600 sm:text-base">{subtitle}</p>
+                <p className="text-[15px] text-white/40 font-medium">{subtitle}</p>
               )}
             </div>
 
@@ -84,20 +71,20 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
           </div>
 
           {/* Footer Text */}
-          <p className="px-4 mt-6 text-xs text-center text-gray-400 sm:text-sm">
-            By continuing, you agree to DocMentor's{" "}
+          <p className="px-4 mt-8 text-[12px] text-center text-white/20 font-medium leading-relaxed">
+            Bằng việc tiếp tục, bạn đồng ý với{" "}
             <Link
               to="/terms"
-              className="text-purple-400 underline hover:text-purple-300"
+              className="text-white/40 underline hover:text-white transition-colors"
             >
-              Terms of Service
+              Điều khoản dịch vụ
             </Link>{" "}
-            and{" "}
+            và{" "}
             <Link
               to="/privacy"
-              className="text-purple-400 underline hover:text-purple-300"
+              className="text-white/40 underline hover:text-white transition-colors"
             >
-              Privacy Policy
+              Chính sách bảo mật
             </Link>
           </p>
         </div>

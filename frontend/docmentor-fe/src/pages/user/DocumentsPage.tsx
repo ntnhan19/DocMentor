@@ -267,62 +267,49 @@ const DocumentsPage: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen p-4 pb-24 bg-background md:p-6 lg:p-8">
-      {/* Header */}
-      <div className="relative p-6 mb-6 overflow-hidden border rounded-2xl bg-gradient-to-br from-accent via-accent to-background border-primary/20 md:p-8 animate-fade-in">
-        <div className="absolute top-0 right-0 w-64 h-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 -translate-x-1/2 translate-y-1/2 rounded-full bg-secondary/10 blur-3xl"></div>
-        <div className="relative z-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <div className="animate-slide-in-left">
-            <h1 className="flex items-center gap-3 mb-2 text-3xl font-bold text-transparent md:text-4xl bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text">
-              <FiEdit2 className="w-8 h-8" /> Thư viện tài liệu
+    <div className="relative min-h-screen p-4 pb-32 bg-black md:p-6 lg:p-8 animate-in fade-in duration-700">
+      {/* Header - Apple Minimalist */}
+      <div className="relative p-8 mb-8 overflow-hidden border border-white/5 rounded-3xl bg-white/[0.02] md:p-10">
+        <div className="relative z-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <div>
+            <h1 className="flex items-center gap-4 mb-3 text-3xl font-bold text-white md:text-4xl tracking-tight">
+              <FiEdit2 className="w-8 h-8 text-white/40" /> Thư viện tài liệu
             </h1>
-            <p className="text-sm text-text-muted md:text-base">
-              Quản lý và tìm kiếm tài liệu của bạn một cách dễ dàng
+            <p className="max-w-2xl text-[15px] font-medium text-apple-primary-muted">
+              Quản lý và tìm kiếm tài liệu của bạn một cách dễ dàng trong không gian làm việc tập trung.
             </p>
           </div>
-          <div className="flex items-center gap-3 animate-slide-in-right">
+          <div className="flex items-center gap-4">
             <Button
               onClick={() => setIsUploadModalOpen(true)}
-              className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-primary/30 transition-all duration-300 hover:scale-105"
+              className="bg-white hover:bg-white/90 text-black px-6 h-11 rounded-full font-bold shadow-2xl shadow-white/10 transition-all duration-300 active:scale-95"
             >
               + Tải lên tài liệu
             </Button>
-            <div className="flex items-center p-1 border bg-accent/80 backdrop-blur-sm rounded-xl border-primary/20">
+            <div className="flex items-center p-1.5 border border-white/10 bg-white/[0.05] rounded-[14px]">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                className={`p-2.5 rounded-lg transition-all duration-300 ${
                   viewMode === "grid"
-                    ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/30"
-                    : "text-text-muted hover:text-white"
+                    ? "bg-white text-black shadow-lg"
+                    : "text-white/30 hover:text-white/70"
                 }`}
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
               </button>
+              <div className="w-px h-5 mx-1 bg-white/10"></div>
               <button
                 onClick={() => setViewMode("list")}
-                className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                className={`p-2.5 rounded-lg transition-all duration-300 ${
                   viewMode === "list"
-                    ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/30"
-                    : "text-text-muted hover:text-white"
+                    ? "bg-white text-black shadow-lg"
+                    : "text-white/30 hover:text-white/70"
                 }`}
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                    clipRule="evenodd"
-                  />
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                 </svg>
               </button>
             </div>
@@ -331,7 +318,7 @@ const DocumentsPage: React.FC = () => {
       </div>
 
       {/* Folder Manager */}
-      <div className="mb-6 p-4 border shadow-lg bg-accent/60 backdrop-blur-sm rounded-xl border-primary/20 animate-fade-in">
+      <div className="mb-8 p-6 apple-glass-heavy border border-white/5 rounded-3xl animate-in slide-in-from-top-4 duration-500">
         <FolderManager
           folders={folders}
           selectedFolderId={selectedFolderId}
@@ -343,11 +330,12 @@ const DocumentsPage: React.FC = () => {
       </div>
 
       {/* Search & Filter */}
-      <div className="relative z-30 mb-8 animate-fade-in">
-        <div className="p-4 border shadow-lg bg-accent/60 backdrop-blur-sm rounded-xl border-primary/20">
-          <div className="mb-4">
+      <div className="relative z-30 mb-10">
+        <div className="p-6 apple-glass border border-white/5 rounded-3xl space-y-6">
+          <div className="w-full">
             <DocumentSearch onSearch={handleSearch} />
           </div>
+          <div className="h-px bg-white/5"></div>
           <div className="w-full">
             <DocumentFilter onFilterChange={handleFilterChange} />
           </div>
