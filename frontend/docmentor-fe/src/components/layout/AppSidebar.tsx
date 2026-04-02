@@ -13,8 +13,6 @@ import {
   FiFolder,
   FiSettings,
   FiLogOut,
-  FiCheck,
-  FiX,
   FiMessageSquare,
   FiSidebar,
 } from "react-icons/fi";
@@ -215,10 +213,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       return "";
     }
   };
-  const getStatusColor = (id: string) =>
-    id.startsWith("temp-")
-      ? "bg-white/5 text-white/40"
-      : "bg-white/10 text-white/90";
 
   // --- SUB-COMPONENT: CONVERSATION ITEM ---
   const ConversationItem: React.FC<{ conv: Conversation }> = ({ conv }) => {

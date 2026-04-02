@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Document } from "@/types/document.types";
 import { DocumentCard } from "@/features/documents/components/user/DocumentCard";
-import { FiLoader, FiAlertCircle, FiX } from "react-icons/fi";
+import { FiAlertCircle, FiX } from "react-icons/fi";
 import { documentService } from "@/services/document/documentService";
 
 interface DocumentGridProps {
