@@ -19,6 +19,7 @@ interface QueryResponse {
   query_id: number | null;
   query_text: string;
   answer: string;
+  is_processing?: boolean; // ✅ Thêm cờ nhận diện trạng thái đang xử lý
   sources: SourceSchema[];
   processing_time_ms: number;
   confidence_score: number;

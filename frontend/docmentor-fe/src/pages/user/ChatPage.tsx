@@ -42,9 +42,11 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     if (isLoggedIn) {
       chatService.getConversations().then(setConversations);
-      if (paramConvId) setActiveConversationId(paramConvId);
     }
-  }, [isLoggedIn, paramConvId]);
+  }, [isLoggedIn]);
+
+  // LUÔN LUÔN lấy ID từ URL làm Priority 1
+  const currentId = paramConvId || activeConversationId;
 
   // --- HANDLERS LEFT SIDEBAR ---
   const handleSelectConversation = (id: string) => {
@@ -183,13 +185,21 @@ const ChatPage: React.FC = () => {
         <div className="flex-1 min-h-0 relative bg-gradient-to-b from-[#100D20] to-[#0d0a19]">
           <ChatContainer
             conversationId={
-              isLoggedIn && !isGuestChat ? activeConversationId : null
+              isLoggedIn && !isGuestChat ? currentId : null
             }
             sessionId={!isLoggedIn || isGuestChat ? guestSessionId : null}
             initialFile={null}
             selectedDocuments={selectedDocuments}
             conversations={conversations}
             onOpenDocumentModal={handleOpenDocumentModal}
+            // ✅ BỔ SUNG: Update sidebar và active ID khi xong
+            onNewConversation={(conv) => {
+              setConversations((prev) => {
+                if (prev.some(c => c.id === conv.id)) return prev;
+                return [conv, ...prev];
+              });
+              setActiveConversationId(conv.id);
+            }}
             onCreateConversationFromHeroChat={
               isLoggedIn && !isGuestChat
                 ? handleCreateConversationFromHeroChat

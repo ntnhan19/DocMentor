@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query as QueryParam
+from fastapi import APIRouter, Depends, HTTPException, status, Query as QueryParam, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import func, cast, Date, desc, asc
 from datetime import datetime, timedelta, time
 from typing import Optional
 
+# (Database and other imports remain same...)
 from ..database import get_db
 from ..models.feedback import Feedback
 from ..models.conversation import Conversation
@@ -15,12 +16,10 @@ from ..utils.security import get_current_user
 
 router = APIRouter(prefix="/query", tags=["Query & RAG"])
 
-# ==========================================================
-# 1) SEND QUERY - MAIN ENDPOINT
-# ==========================================================
 @router.post("/", response_model=QueryResponse)
 async def query_documents(
     request: QueryRequest,
+    background_tasks: BackgroundTasks,
     conversation_id: Optional[int] = QueryParam(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -50,7 +49,9 @@ async def query_documents(
         user=current_user,
         query_text=request.query_text,
         document_ids=request.document_ids,
-        max_results=request.max_results
+        max_results=request.max_results,
+        conversation_id=conversation_id,
+        background_tasks=background_tasks # ✨ Truyền vào đây
     )
 
     # No documents found case or empty result
@@ -64,19 +65,6 @@ async def query_documents(
             "processing_time_ms": result.get("processing_time_ms", 0),
             "created_at": datetime.utcnow()
         }
-
-    # Link query to conversation if provided
-    if conversation and result.get("query_id"):
-        try:
-            query_record = db.query(QueryModel).filter(QueryModel.id == result["query_id"]).first()
-            
-            if query_record:
-                query_record.conversation_id = conversation.id
-                conversation.updated_at = datetime.utcnow()
-                db.commit()
-        except Exception as e:
-            print(f"⚠️ Failed to link query to conversation: {e}")
-            db.rollback()
 
     return {
         "query_id": result["query_id"],

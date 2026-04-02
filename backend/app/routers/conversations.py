@@ -150,6 +150,7 @@ def get_conversation_detail(
             "id": q.id,
             "query_text": q.query_text,
             "response_text": q.response_text or "",
+            "sources": q.sources,  # ✅ Bổ sung để hiển thị trích dẫn khi load history
             "created_at": q.created_at,
             "documents": docs_data
         })
