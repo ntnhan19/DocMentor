@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../../components/layout/AuthLayout";
 import GoogleOAuthButton from "../../features/auth/components/GoogleOAuthButton";
@@ -6,34 +6,43 @@ import { useAuth } from "../../app/providers/AuthProvider";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { loginWithGoogle, isAuthenticated } = useAuth();
+  const { loginWithGoogle, isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState<string>("");
 
   // Tự động chuyển trang nếu đã login
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/user/chat", { replace: true }); // Chuyển về Dashboard hoặc trang chủ
+      navigate("/user/chat", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
-  const handleGoogleSuccess = async (credential: string) => {
+  const handleGoogleSuccess = useCallback(async (credential: string) => {
     try {
+      setError("");
       await loginWithGoogle(credential);
     } catch (err: any) {
-      console.error(err);
-      setError("Đăng nhập thất bại. Vui lòng thử lại.");
+      console.error("❌ LoginPage handleGoogleSuccess error:", err);
+      setError(err.message || "Đăng nhập thất bại. Vui lòng thử lại.");
     }
-  };
+  }, [loginWithGoogle]);
 
   return (
     <AuthLayout
       title="Chào mừng trở lại"
       subtitle="Bắt đầu quản lý tài liệu học tập thông minh"
     >
-      <div className="w-full space-y-6">
+      <div className="w-full space-y-6 relative">
+        {/* Loading Overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-2 text-sm font-medium text-gray-700">Đang xử lý đăng nhập...</p>
+          </div>
+        )}
+
         {/* Thông báo lỗi nếu có */}
         {error && (
-          <div className="p-3 text-sm text-red-600 border border-red-200 rounded-lg bg-red-50">
+          <div className="p-3 text-sm text-red-600 border border-red-200 rounded-lg bg-red-50 animate-fade-in">
             {error}
           </div>
         )}

@@ -4,6 +4,8 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useMemo,
+  useCallback,
   ReactNode,
 } from "react";
 import {
@@ -52,7 +54,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const currentUser = await realAuthService.getCurrentUser();
 
         if (token && currentUser) {
-          console.log("✅ User authenticated:", currentUser.email);
           setUser(currentUser);
           setIsAuthenticated(true);
         } else {
@@ -72,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   // Traditional email/password login
-  const login = async (
+  const login = useCallback(async (
     email: string,
     password: string,
     rememberMe: boolean
@@ -85,10 +86,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error("❌ Login error:", error);
       throw error;
     }
-  };
+  }, []);
 
   // ✨ NEW: Google OAuth login
-  const loginWithGoogle = async (credential: string) => {
+  const loginWithGoogle = useCallback(async (credential: string) => {
     try {
       setIsLoading(true); // Bật loading
 
@@ -98,26 +99,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // 2. Cập nhật State cho toàn bộ ứng dụng
       setUser(response.user);
       setIsAuthenticated(true);
-
-      console.log("✅ Auth Provider State Updated:", response.user.email);
     } catch (error: any) {
       console.error("❌ Google login error in Provider:", error);
       throw error; // Ném lỗi ra để LoginPage hiển thị thông báo
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const register = async (data: RegisterData) => {
+  const register = useCallback(async (data: RegisterData) => {
     try {
       await realAuthService.register(data);
     } catch (error: any) {
       console.error("❌ Registration error:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await realAuthService.logout();
     } catch (error) {
@@ -126,20 +125,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
     }
-  };
+  }, []);
+
+  const authValue = useMemo(() => ({
+    user,
+    isAuthenticated,
+    isLoading,
+    login,
+    loginWithGoogle,
+    logout,
+    register,
+  }), [user, isAuthenticated, isLoading, login, loginWithGoogle, logout, register]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated,
-        isLoading,
-        login,
-        loginWithGoogle, // ✨ NEW
-        logout,
-        register,
-      }}
-    >
+    <AuthContext.Provider value={authValue}>
       {children}
     </AuthContext.Provider>
   );

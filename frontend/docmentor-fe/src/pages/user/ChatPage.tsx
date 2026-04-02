@@ -142,7 +142,7 @@ const ChatPage: React.FC = () => {
       <main
         className={`relative flex flex-col flex-1 h-full transition-all duration-300 ease-in-out min-w-0
           ${showSidebar && isLeftSidebarOpen ? "lg:ml-72" : "ml-0"} 
-          ${isRightSidebarOpen ? "lg:mr-80" : "mr-0"}
+          ${showSidebar && isRightSidebarOpen ? "lg:mr-80" : "mr-0"}
       `}
       >
         {/* ✅ TOOLBAR: Cố định chiều cao h-14 (56px) */}
@@ -200,13 +200,15 @@ const ChatPage: React.FC = () => {
       </main>
 
       {/* 3. RIGHT SIDEBAR */}
-      <RightSidebar
-        isOpen={isRightSidebarOpen}
-        onClose={() => setIsRightSidebarOpen(false)}
-        selectedDocuments={selectedDocuments}
-        onRemoveDocument={handleRemoveDocument}
-        onAddDocument={handleAddDocument}
-      />
+      {showSidebar && (
+        <RightSidebar
+          isOpen={isRightSidebarOpen}
+          onClose={() => setIsRightSidebarOpen(false)}
+          selectedDocuments={selectedDocuments}
+          onRemoveDocument={handleRemoveDocument}
+          onAddDocument={handleAddDocument}
+        />
+      )}
 
       {/* Modal (Fallback) */}
       {isLoggedIn && !isGuestChat && (
