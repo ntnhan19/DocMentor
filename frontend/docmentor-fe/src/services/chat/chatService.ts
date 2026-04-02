@@ -112,7 +112,7 @@ export const chatService = {
     }
   },
 
-  // ✅ 3. Tạo cuộc trò chuyện mới
+  // ✅ 3. Tạo cuộc trò chuyện mới (Gửi kèm câu hỏi đầu tiên - Legacy)
   createNewConversation: async (payload: {
     title: string;
     initialMessage: string;
@@ -140,6 +140,29 @@ export const chatService = {
 
     return {
       id: conversationId.toString(),
+      title: response.data.title,
+      createdAt: response.data.created_at,
+      updatedAt: response.data.updated_at,
+      isPinned: false,
+    };
+  },
+
+  // ✅ 3.1 Tạo cuộc trò chuyện RỖNG (Dành cho Streaming)
+  createEmptyConversation: async (payload: {
+    title: string;
+    documentIds?: (string | number)[];
+  }): Promise<Conversation> => {
+    const numericDocIds = (payload.documentIds || [])
+      .map((id) => (typeof id === "string" ? parseInt(id, 10) : id))
+      .filter((id): id is number => !isNaN(id));
+
+    const response = await apiClient.post("/conversations/", {
+      title: payload.title,
+      document_ids: numericDocIds,
+    });
+
+    return {
+      id: response.data.id.toString(),
       title: response.data.title,
       createdAt: response.data.created_at,
       updatedAt: response.data.updated_at,

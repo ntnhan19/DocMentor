@@ -35,17 +35,17 @@ const typeToIconPath: Record<string, string> = {
 };
 
 const typeToGradient: Record<string, string> = {
-  pdf: "from-red-500/20 to-red-600/20",
-  docx: "from-blue-500/20 to-blue-600/20",
-  txt: "from-gray-500/20 to-gray-600/20",
-  pptx: "from-orange-500/20 to-orange-600/20",
+  pdf: "from-white/10 to-white/5",
+  docx: "from-white/10 to-white/5",
+  txt: "from-white/10 to-white/5",
+  pptx: "from-white/10 to-white/5",
 };
 
 const typeToBorder: Record<string, string> = {
-  pdf: "border-red-500/30",
-  docx: "border-blue-500/30",
-  txt: "border-gray-500/30",
-  pptx: "border-orange-500/30",
+  pdf: "border-white/10",
+  docx: "border-white/10",
+  txt: "border-white/10",
+  pptx: "border-white/10",
 };
 
 export const DocumentCard: React.FC<DocumentCardProps> = ({
@@ -83,11 +83,11 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   if (view === "list") {
     return (
       <div
-        onClick={handleCardClick} // ✅ Attach click handler
-        className={`group relative overflow-hidden bg-accent/40 backdrop-blur-sm border rounded-xl p-4 hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 animate-fade-in cursor-pointer ${
+        onClick={handleCardClick}
+        className={`group relative overflow-hidden apple-glass border rounded-2xl p-5 hover:border-white/20 transition-all duration-500 hover:shadow-2xl hover:shadow-black/40 animate-in fade-in cursor-pointer ${
           isSelected
-            ? "ring-2 ring-primary ring-offset-background ring-offset-2"
-            : "border-primary/20"
+            ? "ring-1 ring-white ring-offset-black ring-offset-4"
+            : "border-white/5"
         }`}
       >
         {isSelected && (
@@ -107,7 +107,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
             </svg>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
         <div className="relative z-10 flex items-center gap-4">
           <div
             className={`bg-gradient-to-br ${typeToGradient[type]} border ${typeToBorder[type]} rounded-xl p-3 flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}
@@ -131,7 +131,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
                     e.stopPropagation();
                     onSaveEdit?.(String(id));
                   }}
-                  className="p-1 rounded-lg bg-gradient-to-r from-primary to-secondary text-white hover:shadow-lg hover:shadow-primary/30"
+                  className="p-1.5 rounded-lg bg-white text-black hover:bg-white/90 shadow-lg"
                   title="Lưu"
                 >
                   <FiCheck className="w-4 h-4" />
@@ -141,7 +141,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
                     e.stopPropagation();
                     onCancelEdit?.();
                   }}
-                  className="p-1 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                  className="p-1.5 rounded-lg bg-white/10 text-white/40 hover:text-white hover:bg-white/20"
                   title="Hủy"
                 >
                   <FiX className="w-4 h-4" />
@@ -150,7 +150,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
             ) : (
               <>
                 <div className="flex items-center justify-between gap-2 mb-1">
-                  <h3 className="font-bold text-lg text-white truncate group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-secondary group-hover:bg-clip-text transition-all duration-300">
+                  <h3 className="font-bold text-[17px] text-white truncate group-hover:text-white transition-all duration-300">
                     {title}
                   </h3>
                   <button
@@ -158,7 +158,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
                       e.stopPropagation();
                       onStartEdit?.(document);
                     }}
-                    className="p-1 rounded-lg text-primary hover:bg-primary/20 opacity-0 group-hover:opacity-100 flex-shrink-0"
+                    className="p-1.5 rounded-lg text-white/30 hover:bg-white/10 hover:text-white opacity-0 group-hover:opacity-100 flex-shrink-0 transition-all"
                     title="Chỉnh sửa"
                   >
                     <FiEdit2 className="w-4 h-4" />
@@ -207,11 +207,11 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   // Grid View
   return (
     <div
-      onClick={handleCardClick} // ✅ Attach click handler
-      className={`group relative flex flex-col h-80 bg-accent/40 backdrop-blur-sm border rounded-xl overflow-hidden hover:border-primary/40 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 animate-fade-in cursor-pointer ${
+      onClick={handleCardClick}
+      className={`group relative flex flex-col h-80 apple-glass border rounded-[32px] overflow-hidden hover:border-white/20 transition-all duration-500 hover:shadow-2xl hover:shadow-black/40 hover:-translate-y-2 animate-in fade-in cursor-pointer ${
         isSelected
-          ? "ring-2 ring-primary ring-offset-background ring-offset-2"
-          : "border-primary/20"
+          ? "ring-1 ring-white ring-offset-black ring-offset-4"
+          : "border-white/5"
       }`}
     >
       {isSelected && (
@@ -231,7 +231,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
           </svg>
         </div>
       )}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <div className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       {!isEditing && (
         <button
           onClick={handleDeleteClick}
@@ -254,9 +254,9 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
         </button>
       )}
       <div
-        className={`relative bg-gradient-to-br ${typeToGradient[type]} border-b ${typeToBorder[type]} p-6 flex justify-center items-center h-32 group-hover:scale-105 transition-transform duration-300`}
+        className={`relative bg-white/[0.03] border-b border-white/5 p-6 flex justify-center items-center h-32 group-hover:scale-105 transition-transform duration-500`}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
         <img
           src={iconSrc}
           alt={`${type} icon`}
@@ -298,7 +298,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
           </div>
         ) : (
           <div className="flex items-start justify-between gap-2 mb-2">
-            <h3 className="font-bold text-lg mb-2 text-white line-clamp-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-secondary group-hover:bg-clip-text transition-all duration-300">
+            <h3 className="font-bold text-[17px] mb-2 text-white line-clamp-2 group-hover:text-white transition-all duration-300 tracking-tight">
               {title}
             </h3>
             <button
@@ -306,7 +306,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
                 e.stopPropagation();
                 onStartEdit?.(document);
               }}
-              className="p-1 rounded-lg text-primary hover:bg-primary/20 opacity-0 group-hover:opacity-100 flex-shrink-0"
+              className="p-1.5 rounded-lg text-white/30 hover:bg-white/10 hover:text-white opacity-0 group-hover:opacity-100 flex-shrink-0 transition-all"
               title="Chỉnh sửa"
             >
               <FiEdit2 className="w-4 h-4" />
@@ -316,26 +316,16 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
         <p className="text-sm text-text-muted mb-3 line-clamp-3 flex-grow">
           {summary || "Không có mô tả cho tài liệu này"}
         </p>
-        <div className="mt-auto pt-3 border-t border-primary/20">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-text-muted">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
+        <div className="mt-auto pt-4 border-t border-white/5">
+          <div className="flex items-center justify-between text-[11px] font-bold tracking-wider uppercase">
+            <div className="flex items-center gap-2 text-white/30">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <span>{formattedDate}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="px-2.5 py-1 bg-primary/20 border border-primary/30 rounded-lg font-semibold text-white">
+              <div className="px-3 py-1 bg-white/10 border border-white/10 rounded-full text-white/70">
                 {formatBytes(fileSize)}
               </div>
             </div>

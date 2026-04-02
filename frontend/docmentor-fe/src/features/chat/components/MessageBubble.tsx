@@ -3,8 +3,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   FiCopy,
-  FiThumbsUp,
-  FiThumbsDown,
   FiFile,
   FiBookOpen,
   FiEdit3,
@@ -12,6 +10,8 @@ import {
   FiExternalLink,
   FiUser,
   FiCpu,
+  FiRotateCcw,
+  FiTrash2,
 } from "react-icons/fi";
 
 // --- TYPES ---
@@ -57,13 +57,13 @@ const CitationBadge: React.FC<{
         className={`px-1.5 py-0.5 text-[10px] font-bold rounded-full cursor-help transition-all ${
           isUser
             ? "bg-white/30 text-white"
-            : "bg-primary text-white hover:bg-primary/80"
+            : "bg-white text-black hover:bg-white/90"
         }`}
       >
         {citation}
       </sup>
       {showTooltip && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 bg-[#0f0e1a] border border-gray-700 shadow-2xl rounded-xl z-[9999] animate-fade-in">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-4 apple-glass-heavy border border-white/10 shadow-2xl rounded-2xl z-[9999] animate-fade-in text-left">
           <div className="pb-1 mb-2 text-xs font-bold tracking-wider text-gray-300 uppercase border-b border-gray-700">
             Nguồn tham khảo
           </div>
@@ -75,7 +75,7 @@ const CitationBadge: React.FC<{
                   className="flex flex-col gap-1 p-2 rounded hover:bg-white/5 border-b border-white/5 last:border-0"
                 >
                   <div className="flex items-start gap-2">
-                    <span className="flex-shrink-0 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center text-[9px] mt-0.5 font-bold">
+                    <span className="flex-shrink-0 w-4 h-4 bg-white text-black rounded-full flex items-center justify-center text-[9px] mt-0.5 font-bold">
                       {sources.length === 1 ? citation : (idx + 1)}
                     </span>
                     <div className="min-w-0">
@@ -96,7 +96,7 @@ const CitationBadge: React.FC<{
                   </div>
                   {/* ✅ HIỂN THỊ SNIPPET TRONG TOOLTIP */}
                   {source.text && (
-                    <p className="text-[11px] text-gray-400 italic leading-relaxed mt-1 border-l-2 border-primary/30 pl-2">
+                    <p className="text-[11px] text-white/50 italic leading-relaxed mt-1 border-l-2 border-white/10 pl-2">
                       "{source.text.length > 150 ? source.text.substring(0, 150) + "..." : source.text}"
                     </p>
                   )}
@@ -289,7 +289,7 @@ const MessageBubble = React.memo(
           </h2>
         ),
         h3: ({ children }: any) => (
-          <h3 className="mt-3 mb-1 text-base font-bold text-secondary">
+          <h3 className="mt-6 mb-2 text-[15px] font-bold text-white/90 tracking-tight uppercase group-hover:text-white transition-colors">
             {renderWithCitations(children, isUser, activeSources)}
           </h3>
         ),
@@ -306,14 +306,14 @@ const MessageBubble = React.memo(
           </ol>
         ),
         table: ({ children }: any) => (
-          <div className="my-4 overflow-hidden rounded-lg border border-gray-700 bg-[#151320]">
+          <div className="my-6 overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] shadow-sm">
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm text-left">{children}</table>
+              <table className="min-w-full text-[14px] text-left border-collapse">{children}</table>
             </div>
           </div>
         ),
         thead: ({ children }: any) => (
-          <thead className="font-semibold text-white bg-gray-800/50">
+          <thead className="font-semibold text-white bg-white/5">
             {children}
           </thead>
         ),
@@ -321,18 +321,18 @@ const MessageBubble = React.memo(
           <tbody className="divide-y divide-gray-700/50">{children}</tbody>
         ),
         tr: ({ children }: any) => (
-          <tr className="transition-colors hover:bg-white/5">{children}</tr>
+          <tr className="transition-colors hover:bg-white/[0.04] border-b border-white/5 last:border-0">{children}</tr>
         ),
         blockquote: ({ children }: any) => (
-          <blockquote className="pl-4 my-2 italic text-gray-400 border-l-4 border-primary">
+          <blockquote className="pl-4 my-4 italic text-white/40 border-l-2 border-white/20 leading-relaxed text-[14px]">
             {children}
           </blockquote>
         ),
         code: ({ inline, className, children, ...props }: any) => {
           const match = /language-(\w+)/.exec(className || "");
           return !inline ? (
-            <div className="my-2 rounded-lg overflow-hidden border border-gray-700 bg-[#0d0a19]">
-              <div className="flex justify-between px-3 py-1 text-xs text-gray-400 bg-gray-800 border-b border-gray-700">
+            <div className="my-4 rounded-2xl overflow-hidden border border-white/5 bg-black/40">
+              <div className="flex justify-between px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white/30 bg-white/[0.02] border-b border-white/5">
                 <span>{match?.[1] || "code"}</span>
               </div>
               <pre className="p-3 overflow-x-auto font-mono text-sm text-gray-300">
@@ -343,7 +343,7 @@ const MessageBubble = React.memo(
             </div>
           ) : (
             <code
-              className="bg-black/30 px-1.5 py-0.5 rounded font-mono text-sm text-secondary"
+              className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[13px] text-white/80"
               {...props}
             >
               {children}
@@ -356,21 +356,21 @@ const MessageBubble = React.memo(
 
     return (
       <div
-        className={`flex w-full gap-4 ${isUser ? "justify-end" : "justify-start"} group mb-6 animate-fade-in`}
+        className={`flex w-full gap-4 ${isUser ? "justify-end" : "justify-start"} group mb-10 animate-in fade-in slide-in-from-bottom-3 duration-700`}
       >
         {!isUser && (
-          <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 mt-1 rounded-full shadow-lg bg-gradient-to-br from-indigo-500 to-purple-600">
+          <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 mt-1 rounded-full apple-glass border-white/10 shadow-sm transition-transform group-hover:scale-105">
             <FiCpu
-              className={`w-4 h-4 text-white ${isLoading ? "animate-pulse" : ""}`}
+              className={`w-4 h-4 text-white/60 ${isLoading ? "animate-pulse" : ""}`}
             />
           </div>
         )}
 
         <div
-          className={`flex flex-col max-w-[85%] lg:max-w-[75%] ${isUser ? "items-end" : "items-start"}`}
+          className={`flex flex-col max-w-[85%] lg:max-w-[80%] ${isUser ? "items-end" : "items-start"}`}
         >
-          <span className="text-[10px] text-gray-500 mb-1 px-1 opacity-70">
-            {isUser ? "Bạn" : "DocMentor AI"} •{" "}
+          <span className="text-[11px] font-medium text-apple-text-secondary mb-2 px-1 tracking-tight">
+            {isUser ? "Bạn" : "DocMentor"} •{" "}
             {new Date(message.timestamp).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -378,51 +378,51 @@ const MessageBubble = React.memo(
           </span>
 
           <div
-            className={`relative px-5 py-4 shadow-md text-sm transition-all ${
+            className={`relative transition-all duration-500 ${
               isUser
-                ? "bg-primary text-white rounded-2xl rounded-tr-sm"
-                : "bg-[#1A162D] border border-white/10 text-gray-200 rounded-2xl rounded-tl-sm"
+                ? "px-5 py-3.5 bg-apple-surface-secondary/80 backdrop-blur-md text-apple-text-main rounded-[22px] rounded-tr-md shadow-sm border border-white/5"
+                : "w-full text-apple-text-main" // AI Bubble trong suốt hoàn toàn
             }`}
           >
             {isLoading ? (
-              <div className="flex gap-1.5 items-center h-5 px-1">
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+              <div className="flex gap-2 items-center h-6 px-1">
+                <span className="w-1.5 h-1.5 bg-apple-accent rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-1.5 h-1.5 bg-apple-accent rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-1.5 h-1.5 bg-apple-accent rounded-full animate-bounce"></span>
               </div>
             ) : (
               <>
                 {isUser &&
                   (message.attachment || message.attachedDocuments) && (
-                    <div className="mb-3 space-y-2">
+                    <div className="mb-4 space-y-2">
                       {message.attachment && (
-                        <div className="flex items-center gap-2 p-2 text-xs border rounded bg-white/10 border-white/10">
-                          <FiFile /> {message.attachment.fileName}
+                        <div className="flex items-center gap-2 p-2.5 text-xs apple-glass rounded-xl">
+                          <FiFile className="text-apple-accent" /> {message.attachment.fileName}
                         </div>
                       )}
                       {message.attachedDocuments?.map((doc, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-2 p-2 text-xs border rounded bg-white/10 border-white/10"
+                          className="flex items-center gap-2 p-2.5 text-xs apple-glass rounded-xl"
                         >
-                          <FiBookOpen /> {doc.title}
+                          <FiBookOpen className="text-apple-accent" /> {doc.title}
                         </div>
                       ))}
                     </div>
                   )}
 
                 {isEditing ? (
-                  <div className="min-w-[300px]">
+                  <div className="min-w-[320px]">
                     <textarea
                       value={editedText}
                       onChange={(e) => setEditedText(e.target.value)}
-                      className="w-full p-2 text-white border rounded bg-black/30 border-white/20 focus:outline-none"
+                      className="w-full p-3 text-apple-text-main border rounded-xl bg-black/40 border-white/10 focus:ring-1 focus:ring-apple-accent focus:outline-none"
                       rows={4}
                     />
-                    <div className="flex justify-end gap-2 mt-2">
+                    <div className="flex justify-end gap-3 mt-3">
                       <button
                         onClick={() => setIsEditing(false)}
-                        className="px-3 py-1 text-xs rounded hover:bg-white/10"
+                        className="px-4 py-1.5 text-xs font-medium text-apple-text-secondary hover:text-apple-primary transition-colors"
                       >
                         Hủy
                       </button>
@@ -431,29 +431,30 @@ const MessageBubble = React.memo(
                           onEditMessage?.(message.id, editedText);
                           setIsEditing(false);
                         }}
-                        className="px-3 py-1 text-xs font-bold bg-white rounded text-primary"
+                        className="px-4 py-1.5 text-xs font-bold bg-apple-primary rounded-full text-black hover:bg-white/90 transition-all"
                       >
                         Lưu
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={markdownComponents}
-                  >
-                    {displayText}
-                  </ReactMarkdown>
+                  <div className="prose-container prose prose-invert prose-p:leading-[1.7] prose-headings:mb-4 prose-headings:mt-6 first:prose-headings:mt-0 prose-pre:apple-glass prose-pre:border-white/5 max-w-none text-[15px] text-apple-text-main/95">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={markdownComponents}
+                    >
+                      {displayText}
+                    </ReactMarkdown>
+                  </div>
                 )}
 
-                {/* Sources Footer - Optimized Grouping */}
+                {/* Sources Footer - Apple Modern Style */}
                 {!isUser && activeSources.length > 0 && (
-                  <div className="pt-3 mt-4 border-t border-white/10">
-                    <div className="flex items-center gap-1 mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                      <FiBookOpen size={10} /> {activeSources.length} Nguồn tham khảo
+                  <div className="pt-6 mt-6 border-t border-white/5">
+                    <div className="flex items-center gap-2 mb-4 text-[11px] font-semibold text-apple-text-secondary uppercase tracking-[0.12em]">
+                      <FiBookOpen size={12} /> {activeSources.length} Nguồn tham khảo
                     </div>
-                    <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
-                      {/* ✅ GỘP NGUỒN TRÙNG LẶP */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
                       {Object.values(activeSources.reduce((acc: any, src, idx) => {
                         const key = src.documentId || src.documentTitle;
                         if (!acc[key]) {
@@ -466,28 +467,28 @@ const MessageBubble = React.memo(
                       }, {})).map((group: any, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-2 p-2 rounded bg-black/20 hover:bg-black/40 border border-transparent hover:border-white/10 transition-colors cursor-pointer group"
+                          className="flex items-center gap-3 p-3 rounded-2xl apple-glass hover:bg-white/[0.04] border-white/5 transition-all cursor-pointer group/source"
                         >
-                          <div className="flex -space-x-1 overflow-hidden">
+                          <div className="flex -space-x-1.5 overflow-hidden">
                             {group.indices.map((idx: number) => (
-                              <span key={idx} className="w-5 h-5 bg-gray-700 group-hover:bg-primary group-hover:text-white transition-colors rounded-full flex items-center justify-center text-[9px] font-bold text-gray-300 border border-[#1A162D]">
+                              <span key={idx} className="w-5 h-5 bg-apple-surface-secondary group-hover/source:bg-apple-accent group-hover/source:text-white transition-colors rounded-full flex items-center justify-center text-[10px] font-bold text-apple-primary/80 border border-black shadow-sm">
                                 {idx}
                               </span>
                             ))}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="block text-[11px] text-gray-400 truncate group-hover:text-gray-200">
+                            <span className="block text-[12px] font-medium text-apple-text-main/90 truncate group-hover/source:text-apple-primary">
                               {group.documentTitle || "Tài liệu"}
                             </span>
                             {group.pages.size > 0 && (
-                              <span className="text-[9px] text-gray-600">
+                              <span className="text-[10px] text-apple-text-secondary/70">
                                 Trang: {Array.from(group.pages).join(", ")}
                               </span>
                             )}
                           </div>
                           <FiExternalLink
-                            size={10}
-                            className="text-gray-600 group-hover:text-gray-400"
+                            size={12}
+                            className="text-apple-text-secondary opacity-0 group-hover/source:opacity-100 transition-opacity"
                           />
                         </div>
                       ))}
@@ -498,30 +499,30 @@ const MessageBubble = React.memo(
             )}
           </div>
 
-          {/* Actions */}
+          {/* Action Buttons - Minimal Ghost Style */}
           {!isLoading && (
-            <div className="flex items-center gap-1 px-1 mt-1 transition-opacity opacity-0 group-hover:opacity-100">
+            <div className="flex items-center gap-2 px-1 mt-3 transition-opacity opacity-0 group-hover:opacity-100">
               <button
                 onClick={handleCopy}
-                className="p-1.5 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
+                className="p-1.5 hover:bg-white/5 rounded-full text-apple-text-secondary hover:text-apple-primary transition-all"
                 title="Sao chép"
               >
-                {copied ? <FiCheck size={14} /> : <FiCopy size={14} />}
+                {copied ? <FiCheck size={14} className="text-green-500" /> : <FiCopy size={14} />}
               </button>
               {!isUser && (
                 <>
-                  <button className="p-1.5 hover:bg-white/10 rounded text-gray-500 hover:text-green-400">
-                    <FiThumbsUp size={14} />
+                  <button className="p-1.5 hover:bg-white/5 rounded-full text-apple-text-secondary hover:text-apple-primary">
+                    <FiRotateCcw size={14} />
                   </button>
-                  <button className="p-1.5 hover:bg-white/10 rounded text-gray-500 hover:text-red-400">
-                    <FiThumbsDown size={14} />
+                  <button className="p-1.5 hover:bg-white/5 rounded-full text-apple-text-secondary hover:text-red-400">
+                    <FiTrash2 size={14} />
                   </button>
                 </>
               )}
               {isUser && (
-                <button
+                <button 
                   onClick={() => setIsEditing(true)}
-                  className="p-1.5 hover:bg-white/10 rounded text-gray-500 hover:text-white"
+                  className="p-1.5 hover:bg-white/5 rounded-full text-apple-text-secondary hover:text-apple-primary"
                 >
                   <FiEdit3 size={14} />
                 </button>
@@ -530,8 +531,8 @@ const MessageBubble = React.memo(
           )}
         </div>
         {isUser && (
-          <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 mt-1 bg-gray-700 rounded-full">
-            <FiUser className="text-gray-300" />
+          <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 mt-1 bg-white rounded-full shadow-sm border border-white/20">
+            <FiUser className="text-black w-4 h-4" />
           </div>
         )}
       </div>

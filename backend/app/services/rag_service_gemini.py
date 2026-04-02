@@ -91,7 +91,7 @@ class RAGServiceGemini:
     # ============================================================================
     # 2. MAIN QUERY FUNCTION
     # ============================================================================
-    async def query_documents(
+    async def query_documents_stream(
         self,
         db: Session,
         user: User,
@@ -99,161 +99,96 @@ class RAGServiceGemini:
         document_ids: List[int],
         max_results: int = 10,
         conversation_id: Optional[int] = None,
-        background_tasks: Optional[BackgroundTasks] = None # ✅ Nhận background_tasks
-    ) -> Dict[str, Any]:
-        """Main RAG pipeline with source extraction"""
+        background_tasks: Optional[BackgroundTasks] = None
+    ):
+        """
+        Streaming RAG pipeline.
+        Yields JSON chunks for SSE.
+        """
+        import json
         start_time = time.time()
-
+        accumulated_answer = ""
+        
         try:
-            logger.info(f"🔍 Processing query from user {user.id}: '{query_text}'")
-
-            # --- Step 1: Validate Documents & Trigger Self-Healing ---
-            # Tìm tất cả tài liệu user chọn (không quan tâm processed hay chưa)
+            # --- Bước 1: Kiểm tra tài liệu & Self-Healing ---
             all_selected_docs = db.query(Document).filter(
                 Document.id.in_(document_ids),
                 Document.user_id == user.id
             ).all()
 
             if not all_selected_docs:
-                return {
-                    'query_id': None,
-                    'answer': "Không tìm thấy tài liệu phù hợp.",
-                    'is_processing': False,
-                    'sources': [],
-                    'confidence_score': 0.0,
-                    'processing_time_ms': int((time.time() - start_time) * 1000)
-                }
+                yield json.dumps({"answer": "Không tìm thấy tài liệu phù hợp.", "is_done": True})
+                return
 
-            # Tự động kích hoạt xử lý cho tài liệu chưa xong
+            # Trigger background processing
             unprocessed_docs = [d for d in all_selected_docs if not d.processed]
             if unprocessed_docs and background_tasks:
                 from ..routers.documents import process_document_background
                 for doc in unprocessed_docs:
-                    logger.info(f"⚡ [SELF-HEALING] Triggering background processing for doc {doc.id}")
                     background_tasks.add_task(process_document_background, doc.id, doc.file_path)
 
-            # Chỉ lấy những tài liệu đã processed để thực hiện RAG
-            documents = [d for d in all_selected_docs if d.processed]
-            
-            if not documents:
-                return {
-                    'query_id': None,
-                    'answer': "Tài liệu đang được hệ thống học. Vui lòng thử lại sau vài giây nữa.",
-                    'is_processing': True, # ✅ Trả về cờ hiệu cho Frontend
-                    'sources': [],
-                    'confidence_score': 0.0,
-                    'processing_time_ms': int((time.time() - start_time) * 1000)
-                }
-            
-            valid_doc_ids = [doc.id for doc in documents]
-            doc_map = {doc.id: doc for doc in documents}
-            
-            # --- Step 2: Semantic Search (Embeddings) ---
-            logger.info(f"🔎 Searching chunks for docs: {valid_doc_ids}")
-            matches = []
-            
-            # Chiến lược tìm kiếm:
-            # Nếu user chọn > 1 file, ta tìm kiếm riêng lẻ từng file rồi gộp lại
-            # Để tránh việc 1 file dài chiếm hết kết quả tìm kiếm
-            if len(valid_doc_ids) > 1:
-                # Chia quota: Ví dụ max 15 results, 3 file -> mỗi file lấy 5 chunk
-                chunks_per_doc = max(3, int(max_results / len(valid_doc_ids)) + 2)
-                
-                for doc_id in valid_doc_ids:
-                    doc_matches = await self.embedding_service.search_similar_chunks(
-                        query=query_text,
-                        document_ids=[doc_id], 
-                        top_k=chunks_per_doc
-                    )
-                    matches.extend(doc_matches)
-                
-                # Sort lại theo độ tương đồng và cắt đúng số lượng cần thiết
-                matches.sort(key=lambda x: x['score'], reverse=True)
-                matches = matches[:max_results + 5] # Lấy dư một chút
-            else:
-                # Nếu chỉ 1 file thì search bình thường
-                matches = await self.embedding_service.search_similar_chunks(
-                    query=query_text,
-                    document_ids=valid_doc_ids,
-                    top_k=max_results
-                )
-            
-            # Check if relevant content found
+            processed_docs = [d for d in all_selected_docs if d.processed]
+            if not processed_docs:
+                yield json.dumps({"is_processing": True, "answer": "Tài liệu đang được nạp vào bộ nhớ...", "is_done": True})
+                return
+
+            valid_doc_ids = [doc.id for doc in processed_docs]
+            doc_map = {doc.id: doc for doc in processed_docs}
+
+            # --- Bước 2: Tìm kiếm ngữ cảnh ---
+            matches = await self.embedding_service.search_similar_chunks(
+                query=query_text,
+                document_ids=valid_doc_ids,
+                top_k=max_results
+            )
+
             if not matches or matches[0]['score'] < 0.25:
-                return {
-                    'query_id': None,
-                    'answer': NO_RESULT_RESPONSE.format(query=query_text),
-                    'is_processing': False,
-                    'sources': [],
-                    'confidence_score': 0.0,
-                    'processing_time_ms': int((time.time() - start_time) * 1000)
-                }
-            
-            # --- Step 3: Build Context ---
-            logger.info(f"📝 Building context from {len(matches)} chunks...")
-            # format_context sẽ đánh số [1], [2]... tương ứng thứ tự matches
+                yield json.dumps({"answer": NO_RESULT_RESPONSE.format(query=query_text), "is_done": True})
+                return
+
             context = format_context(matches, doc_map)
-            
-            # --- Step 4: Call Gemini ---
-            logger.info(f"🤖 Generating answer with optimized prompt...")
-            raw_answer = await self.gemini_service.generate_answer(
+
+            # --- Bước 3: Streaming từ Gemini ---
+            async for text_chunk in self.gemini_service.generate_answer_stream(
                 query=query_text,
                 context=context,
                 system_instruction=SYSTEM_INSTRUCTION
-            )
-            
-            # --- Step 5: Extract & Clean Sources ---
-            logger.info(f"🔍 Extracting sources from AI response...")
+            ):
+                accumulated_answer += text_chunk
+                yield json.dumps({"chunk": text_chunk})
+
+            # --- Bước 4: Xử lý hậu kỳ (Trích dẫn & Lưu DB) ---
             cleaned_answer, sources = self.extract_sources_from_response(
-                raw_answer,
+                accumulated_answer,
                 matches,
                 doc_map
             )
-            
-            # --- Step 6: Save to DB (History) ---
-            # Tính điểm tin cậy trung bình
-            avg_similarity = sum(m['score'] for m in matches) / len(matches)
-            confidence_score = min(avg_similarity * 1.5, 1.0)
-            
+
+            # Lưu lịch sử vào Database
             query_record = QueryModel(
                 user_id=user.id,
-                conversation_id=conversation_id, # ✅ Atomic linking
+                conversation_id=conversation_id,
                 query_text=query_text,
-                response_text=cleaned_answer, # Lưu text sạch
-                sources=sources,              # ✅ Lưu JSON sources đầy đủ (có title)
-                execution_time=int((time.time() - start_time) * 1000),
-                rating=None
+                response_text=cleaned_answer,
+                sources=sources,
+                execution_time=int((time.time() - start_time) * 1000)
             )
-            
-            # Link query với documents (Bảng trung gian)
-            query_record.documents = documents
-            
+            query_record.documents = processed_docs
             db.add(query_record)
             db.commit()
             db.refresh(query_record)
-            
-            processing_time = int((time.time() - start_time) * 1000)
-            logger.info(f"✅ Query completed in {processing_time}ms with {len(sources)} sources")
-            
-            return {
-                'query_id': query_record.id,
-                'answer': cleaned_answer,
-                'is_processing': False, # ✅ Hoàn tất
-                'sources': sources,
-                'confidence_score': round(confidence_score, 2),
-                'processing_time_ms': processing_time
-            }
-            
+
+            # Gửi chunk cuối cùng chứa metadata đầy đủ
+            yield json.dumps({
+                "query_id": query_record.id,
+                "answer": cleaned_answer, # Gửi bản đã sạch trích dẫn
+                "sources": sources,
+                "is_done": True
+            })
+
         except Exception as e:
-            logger.error(f"❌ Error in RAG pipeline: {str(e)}")
-            # Không raise lỗi để tránh crash UI, trả về thông báo lỗi nhẹ
-            return {
-                'query_id': None,
-                'answer': "Xin lỗi, tôi gặp sự cố khi xử lý yêu cầu này. Vui lòng thử lại.",
-                'sources': [],
-                'confidence_score': 0.0,
-                'processing_time_ms': 0
-            }
+            logger.error(f"❌ Error in streaming RAG: {str(e)}")
+            yield json.dumps({"error": str(e), "is_done": True})
 
     # ==============================================================
     # 🔧 Private helper methods

@@ -22,12 +22,12 @@ const SettingsSection: React.FC<{
   icon: ReactNode;
 }> = ({ title, children, icon }) => {
   return (
-    <section className="p-6 mb-6 transition-all duration-300 border bg-accent/50 backdrop-blur-sm border-primary/20 rounded-2xl hover:border-primary/40 animate-fade-in hover:shadow-lg hover:shadow-primary/10">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2.5 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-xl">
+    <section className="p-8 mb-8 apple-glass border-white/5 rounded-[32px] hover:border-white/10 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
+      <div className="flex items-center gap-4 mb-8 text-white">
+        <div className="p-3 bg-white/5 rounded-2xl border border-white/5 shadow-inner">
           {icon}
         </div>
-        <h2 className="text-2xl font-bold text-transparent bg-gradient-to-r from-primary to-secondary bg-clip-text">
+        <h2 className="text-2xl font-bold tracking-tight">
           {title}
         </h2>
       </div>
@@ -43,7 +43,7 @@ const SettingsRow: React.FC<{
   action: ReactNode;
 }> = ({ title, description, action }) => {
   return (
-    <div className="flex items-center justify-between min-h-[64px] p-4 rounded-xl hover:bg-primary/5 transition-all duration-200 group">
+    <div className="flex items-center justify-between min-h-[72px] p-4 rounded-2xl hover:bg-white/[0.03] transition-all duration-300 group border border-transparent hover:border-white/5">
       <div className="flex-1 pr-4">
         <p className="mb-1 font-semibold transition-colors text-white/90 group-hover:text-white">
           {title}
@@ -72,7 +72,7 @@ const ThemeToggle: React.FC = () => {
   ];
 
   return (
-    <div className="flex items-center space-x-1 bg-accent/80 p-1.5 rounded-xl border border-primary/20">
+    <div className="flex items-center space-x-1 bg-white/[0.03] p-1.5 rounded-2xl border border-white/5">
       {themes.map(({ value, label, icon }) => (
         <button
           key={value}
@@ -81,8 +81,8 @@ const ThemeToggle: React.FC = () => {
             flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-all duration-300
             ${
               theme === value
-                ? "bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/30 scale-105"
-                : "text-text-muted hover:text-white hover:bg-primary/10"
+                ? "bg-white text-black font-bold shadow-2xl shadow-white/10"
+                : "text-white/30 hover:text-white hover:bg-white/5"
             }
           `}
         >
@@ -129,17 +129,17 @@ const SettingsPage: React.FC = () => {
   return (
     <div className="max-w-5xl px-4 py-8 mx-auto sm:px-6 lg:px-8">
       {/* Header với gradient */}
-      <div className="mb-10 animate-slide-in-right">
-        <h1 className="mb-3 text-4xl font-bold text-transparent md:text-5xl bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text">
+      <div className="mb-12 animate-in slide-in-from-right-4 duration-700">
+        <h1 className="mb-3 text-4xl font-bold text-white md:text-5xl tracking-tight">
           Cài đặt
         </h1>
-        <p className="text-lg text-text-muted">Tùy chỉnh trải nghiệm của bạn</p>
+        <p className="text-[17px] font-medium text-apple-primary-muted">Tùy chỉnh không gian làm việc DocMentor của bạn</p>
       </div>
 
       {/* === PHẦN GIAO DIỆN === */}
       <SettingsSection
         title="Giao diện"
-        icon={<Palette className="w-6 h-6 text-primary" />}
+        icon={<Palette className="w-6 h-6 text-white/50" />}
       >
         <SettingsRow
           title="Chủ đề"
@@ -151,12 +151,12 @@ const SettingsPage: React.FC = () => {
           description="Chọn ngôn ngữ hiển thị cho ứng dụng."
           action={
             <select
-              className="bg-accent/80 backdrop-blur-sm px-4 py-2.5 rounded-xl text-sm border border-primary/20 
-                             text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 
-                             hover:border-primary/40 transition-all duration-300 cursor-pointer"
+              className="bg-white/[0.03] px-5 py-2.5 rounded-xl text-[14px] border border-white/5 
+                             text-white focus:outline-none focus:ring-4 focus:ring-white/5 focus:border-white/10 
+                             hover:bg-white/[0.05] transition-all duration-300 cursor-pointer font-medium"
             >
-              <option className="bg-accent">Tiếng Việt</option>
-              <option className="bg-accent">English</option>
+              <option className="bg-black">Tiếng Việt</option>
+              <option className="bg-black">English</option>
             </select>
           }
         />
@@ -165,7 +165,7 @@ const SettingsPage: React.FC = () => {
       {/* === PHẦN TÀI KHOẢN === */}
       <SettingsSection
         title="Tài khoản"
-        icon={<Shield className="w-6 h-6 text-primary" />}
+        icon={<Shield className="w-6 h-6 text-white/50" />}
       >
         <SettingsRow
           title="Đổi mật khẩu"
@@ -173,7 +173,7 @@ const SettingsPage: React.FC = () => {
           action={
             <Button
               onClick={handleChangePassword}
-              className="transition-all duration-300 border bg-primary/20 hover:bg-primary/30 text-primary hover:text-white border-primary/30 hover:border-primary/50"
+              className="bg-white text-black hover:bg-white/90 font-bold px-6 h-11 rounded-full shadow-xl shadow-white/5 active:scale-95 transition-all"
             >
               <Lock className="w-4 h-4 mr-2" />
               Thay đổi
@@ -187,7 +187,7 @@ const SettingsPage: React.FC = () => {
             <Button
               variant="danger"
               onClick={handleDeleteAccount}
-              className="text-red-400 transition-all duration-300 border bg-red-500/20 hover:bg-red-500/30 hover:text-red-300 border-red-500/30 hover:border-red-500/50"
+              className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 px-6 h-11 rounded-full font-bold active:scale-95 transition-all outline-none"
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Xóa tài khoản
@@ -199,7 +199,7 @@ const SettingsPage: React.FC = () => {
       {/* === PHẦN DỮ LIỆU & AI === */}
       <SettingsSection
         title="Dữ liệu & AI"
-        icon={<Database className="w-6 h-6 text-primary" />}
+        icon={<Database className="w-6 h-6 text-white/50" />}
       >
         <SettingsRow
           title="Xóa toàn bộ lịch sử chat"
@@ -208,7 +208,7 @@ const SettingsPage: React.FC = () => {
             <Button
               variant="secondary"
               onClick={handleClearHistory}
-              className="transition-all duration-300 border bg-secondary/20 hover:bg-secondary/30 text-secondary hover:text-white border-secondary/30 hover:border-secondary/50"
+              className="bg-white/5 text-white/40 hover:text-white hover:bg-white/10 border border-white/5 px-6 h-11 rounded-full font-bold active:scale-95 transition-all uppercase text-[12px] tracking-widest"
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Xóa lịch sử
@@ -218,10 +218,10 @@ const SettingsPage: React.FC = () => {
       </SettingsSection>
 
       {/* Footer Info */}
-      <div className="p-6 mt-10 border bg-accent/30 backdrop-blur-sm border-primary/10 rounded-2xl animate-fade-in">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-secondary/20">
-            <Shield className="w-5 h-5 text-secondary" />
+      <div className="p-8 mt-12 apple-glass border-white/5 rounded-[32px] animate-in fade-in duration-1000">
+        <div className="flex items-start gap-5">
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5">
+            <Shield className="w-6 h-6 text-white/30" />
           </div>
           <div>
             <h3 className="mb-1 font-semibold text-white/90">

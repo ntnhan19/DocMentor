@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Document } from "@/types/document.types";
 import { DocumentCard } from "@/features/documents/components/user/DocumentCard";
-import { FiLoader, FiAlertCircle, FiX } from "react-icons/fi";
+import { FiAlertCircle, FiX } from "react-icons/fi";
 import { documentService } from "@/services/document/documentService";
 
 interface DocumentGridProps {
@@ -93,23 +93,22 @@ export const DocumentGrid: React.FC<DocumentGridProps> = ({
         ))}
       </div>
 
-      {/* Preview Panel - Right Bottom */}
+      {/* Preview Panel - Apple Glass Heavy */}
       {selectedDoc && (
-        <div className="fixed right-6 bottom-6 w-96 bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-md rounded-xl border border-primary/30 p-6 flex flex-col shadow-2xl z-50 max-h-[70vh] animate-fade-in">
+        <div className="fixed right-6 bottom-6 w-[400px] apple-glass-heavy rounded-[32px] border border-white/10 p-8 flex flex-col shadow-2xl z-50 max-h-[75vh] animate-in slide-in-from-right-10 duration-500">
           {/* Header */}
-          <div className="flex items-start justify-between gap-4 mb-4 pb-4 border-b border-white/10">
+          <div className="flex items-start justify-between gap-4 mb-6 pb-6 border-b border-white/5">
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-white text-lg line-clamp-2">
+              <h3 className="font-bold text-white text-[19px] tracking-tight leading-tight line-clamp-2">
                 {selectedDoc.title}
               </h3>
-              <p className="text-xs text-gray-400 mt-1">
-                {selectedDoc.type.toUpperCase()} •{" "}
-                {(selectedDoc.fileSize / 1024).toFixed(1)} KB
+              <p className="text-[11px] font-bold text-white/30 mt-2 uppercase tracking-widest">
+                {selectedDoc.type.toUpperCase()} • {(selectedDoc.fileSize / 1024).toFixed(1)} KB
               </p>
             </div>
             <button
               onClick={() => setSelectedDoc(null)}
-              className="p-2 rounded-lg text-gray-400 hover:bg-slate-700/50 hover:text-white transition-all flex-shrink-0"
+              className="p-2.5 rounded-full text-white/30 hover:bg-white/10 hover:text-white transition-all flex-shrink-0"
               title="Đóng"
             >
               <FiX className="w-5 h-5" />
@@ -119,10 +118,10 @@ export const DocumentGrid: React.FC<DocumentGridProps> = ({
           {/* Preview Content */}
           <div className="flex-1 overflow-y-auto min-h-0 mb-4">
             {isLoadingPreview ? (
-              <div className="flex flex-col items-center justify-center gap-3 h-40">
-                <FiLoader className="w-6 h-6 animate-spin text-primary" />
-                <span className="text-sm text-gray-400">
-                  Đang tải xem trước...
+              <div className="flex flex-col items-center justify-center gap-4 h-52">
+                <div className="w-8 h-8 border-2 border-white/10 border-t-white rounded-full animate-spin"></div>
+                <span className="text-[13px] font-medium text-white/30">
+                  Đang chuẩn bị nội dung...
                 </span>
               </div>
             ) : previewError ? (
@@ -134,19 +133,21 @@ export const DocumentGrid: React.FC<DocumentGridProps> = ({
                 </div>
               </div>
             ) : (
-              <pre className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap font-mono break-words">
-                {previewText || "Không có nội dung"}
-              </pre>
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                <pre className="text-[12px] text-white/70 leading-relaxed whitespace-pre-wrap font-mono break-words">
+                  {previewText || "Không có nội dung mô tả"}
+                </pre>
+              </div>
             )}
           </div>
 
-          {/* Footer */}
-          <div className="pt-4 border-t border-white/10">
+          {/* Footer Actions */}
+          <div className="pt-6 mt-4">
             <button
               onClick={() => onView(String(selectedDoc.id))}
-              className="w-full py-2 px-4 rounded-lg bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-lg hover:shadow-primary/30 transition-all"
+              className="w-full h-12 rounded-full bg-white text-black font-bold text-[14px] hover:bg-white/90 transition-all shadow-xl shadow-white/5 active:scale-[0.98]"
             >
-              Xem đầy đủ
+              Mở tài liệu đầy đủ
             </button>
           </div>
         </div>

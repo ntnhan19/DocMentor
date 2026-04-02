@@ -122,7 +122,7 @@ const ChatPage: React.FC = () => {
 
   return (
     // ✅ FIX LAYOUT: Dùng fixed inset-0 để bao trọn màn hình, pt-16 để chừa chỗ cho Header
-    <div className="fixed inset-0 w-full bg-[#100D20] pt-16 z-0 flex">
+    <div className="fixed inset-0 w-full bg-black pt-16 z-0 flex">
       {/* 1. LEFT SIDEBAR */}
       {showSidebar && (
         <AppSidebar
@@ -147,28 +147,26 @@ const ChatPage: React.FC = () => {
           ${showSidebar && isRightSidebarOpen ? "lg:mr-80" : "mr-0"}
       `}
       >
-        {/* ✅ TOOLBAR: Cố định chiều cao h-14 (56px) */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 h-14 bg-[#100D20] border-b border-white/5 z-20">
-          {/* Nút Mở Sidebar Trái (Chỉ hiện khi đóng) */}
+        {/* ✅ TOOLBAR: Chuyển sang Apple Glass & Monochrome */}
+        <div className="flex-shrink-0 flex items-center justify-between px-6 h-14 apple-glass border-b border-white/5 z-20">
+          {/* Nút Mở Sidebar Trái */}
           <div className="flex items-center gap-2">
             {showSidebar && !isLeftSidebarOpen && (
               <button
                 onClick={() => setIsLeftSidebarOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-400 bg-white/5 hover:bg-white/10 hover:text-white rounded-lg transition-all animate-fade-in"
-                title="Mở Menu"
+                className="flex items-center gap-2 px-3 py-1.5 text-[11px] font-bold text-white/40 bg-white/5 hover:bg-white/10 hover:text-white rounded-lg transition-all animate-fade-in uppercase tracking-wider"
               >
                 <FiSidebar className="w-4 h-4" /> <span>Menu</span>
               </button>
             )}
           </div>
 
-          {/* Nút Mở Sidebar Phải (Chỉ hiện khi đóng) */}
+          {/* Nút Mở Sidebar Phải */}
           <div className="flex items-center gap-2">
             {!isRightSidebarOpen && (
               <button
                 onClick={() => setIsRightSidebarOpen(true)}
-                className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg transition-all animate-fade-in ${selectedDocuments.length > 0 ? "text-secondary bg-secondary/10" : "text-gray-400 bg-white/5 hover:text-white"}`}
-                title="Mở Ngữ cảnh"
+                className={`flex items-center gap-2 px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all animate-fade-in uppercase tracking-wider ${selectedDocuments.length > 0 ? "text-white bg-white/10 border border-white/10" : "text-white/40 bg-white/5 hover:text-white"}`}
               >
                 <span>
                   {selectedDocuments.length > 0
@@ -181,8 +179,8 @@ const ChatPage: React.FC = () => {
           </div>
         </div>
 
-        {/* ✅ FIX: Nền Chat đồng bộ, thêm chút gradient nhẹ */}
-        <div className="flex-1 min-h-0 relative bg-gradient-to-b from-[#100D20] to-[#0d0a19]">
+        {/* ✅ CHAT AREA: Đen tuyền, sạch sẽ */}
+        <div className="flex-1 min-h-0 relative bg-black">
           <ChatContainer
             conversationId={
               isLoggedIn && !isGuestChat ? currentId : null

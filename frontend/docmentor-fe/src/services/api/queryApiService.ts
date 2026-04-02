@@ -87,6 +87,69 @@ class QueryApiService {
     }
   }
 
+  // ✅ API: Gửi câu hỏi dạng STREAM (REAL-TIME)
+  async sendQueryStream(
+    queryText: string,
+    documentIds: number[],
+    onChunk: (data: { chunk?: string; answer?: string; sources?: any[]; is_done?: boolean; is_processing?: boolean; query_id?: number }) => void,
+    conversationId?: number,
+    maxResults: number = 15
+  ): Promise<void> {
+    try {
+      // 🔒 FIX: Lấy đúng KEY token như trong apiClient.ts
+      const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+      const url = `${apiClient.defaults.baseURL}${conversationId ? `/query/?conversation_id=${conversationId}` : "/query/"}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          query_text: queryText,
+          document_ids: documentIds,
+          max_results: maxResults,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) return;
+
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        
+        // SSE parsing: Tách theo \n\n
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || ""; // Giữ lại phần chưa hoàn chỉnh cuối cùng
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.replace("data: ", ""));
+              onChunk(data);
+            } catch (e) {
+              console.error("❌ Error parsing stream line:", e);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("❌ Streaming query failed:", error);
+      throw error;
+    }
+  }
+
   // ✅ API: Lấy lịch sử chat
   async getQueryHistory(params?: HistoryParams): Promise<QueryHistory> {
     const response = await apiClient.get<QueryHistory>("/query/history", {

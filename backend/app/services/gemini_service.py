@@ -38,15 +38,11 @@ class GeminiService:
             return ""
 
     async def generate_answer(self, query: str, context: str, system_instruction: str = None) -> str:
-        """Generate answer for RAG"""
+        """Generate answer for RAG (Non-streaming)"""
         try:
-            # Nếu có system instruction, tạo model mới tạm thời (hoặc dùng chat session)
-            # Với Flash 2.5, ta có thể đưa system instruction thẳng vào prompt để tiết kiệm
             full_prompt = f"{system_instruction}\n\nCONTEXT:\n{context}\n\nQUERY:\n{query}"
-            
             logger.info("🤖 Generating answer with Gemini 2.5 Flash...")
             
-            # 🔥 FIX 3: Dùng hàm async
             response = await self.model.generate_content_async(
                 full_prompt,
                 safety_settings=self.safety_settings,
@@ -58,6 +54,27 @@ class GeminiService:
         except Exception as e:
             logger.error(f"❌ Error generating answer: {str(e)}", exc_info=True)
             return "Xin lỗi, tôi không thể trả lời câu hỏi này lúc này. Vui lòng thử lại sau."
+
+    async def generate_answer_stream(self, query: str, context: str, system_instruction: str = None):
+        """Generate answer for RAG (Streaming)"""
+        try:
+            full_prompt = f"{system_instruction}\n\nCONTEXT:\n{context}\n\nQUERY:\n{query}"
+            logger.info("🤖 Streaming answer with Gemini 2.5 Flash...")
+            
+            response = await self.model.generate_content_async(
+                full_prompt,
+                safety_settings=self.safety_settings,
+                generation_config={'temperature': 0.4, 'max_output_tokens': 8192},
+                stream=True
+            )
+            
+            async for chunk in response:
+                if chunk.text:
+                    yield chunk.text
+                    
+        except Exception as e:
+            logger.error(f"❌ Error streaming answer: {str(e)}", exc_info=True)
+            yield "Bị lỗi kết nối khi đang stream dữ liệu. Vui lòng thử lại."
 
     async def generate_summary(self, text: str, length: str = "medium") -> str:
         """Generate summary"""

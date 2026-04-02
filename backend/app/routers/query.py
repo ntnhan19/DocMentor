@@ -16,7 +16,10 @@ from ..utils.security import get_current_user
 
 router = APIRouter(prefix="/query", tags=["Query & RAG"])
 
-@router.post("/", response_model=QueryResponse)
+from fastapi.responses import StreamingResponse
+import json
+
+@router.post("/")
 async def query_documents(
     request: QueryRequest,
     background_tasks: BackgroundTasks,
@@ -25,13 +28,13 @@ async def query_documents(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Send query to RAG service.
+    Send query to RAG service and return a StreamingResponse (SSE).
     """
-    rag_service = RAGServiceGemini()
-
-    # Validate conversation if provided
-    conversation = None
+    # Validate conversation ownership if provided
     if conversation_id:
+        from ..models.conversation import Conversation
+        from fastapi import HTTPException, status
+        
         conversation = db.query(Conversation).filter(
             Conversation.id == conversation_id,
             Conversation.user_id == current_user.id
@@ -43,38 +46,30 @@ async def query_documents(
                 detail="Conversation not found or not owned by you"
             )
 
-    # Execute RAG query
-    result = await rag_service.query_documents(
-        db=db,
-        user=current_user,
-        query_text=request.query_text,
-        document_ids=request.document_ids,
-        max_results=request.max_results,
-        conversation_id=conversation_id,
-        background_tasks=background_tasks # ✨ Truyền vào đây
-    )
+    rag_service = RAGServiceGemini()
 
-    # No documents found case or empty result
-    if "query_id" not in result or not result["query_id"]:
-        return {
-            "query_id": None,
-            "query_text": request.query_text,
-            "answer": result.get("answer", ""),
-            "sources": result.get("sources", []),
-            "confidence_score": result.get("confidence_score", 0.0),
-            "processing_time_ms": result.get("processing_time_ms", 0),
-            "created_at": datetime.utcnow()
+    async def stream_generator():
+        async for chunk in rag_service.query_documents_stream(
+            db=db,
+            user=current_user,
+            query_text=request.query_text,
+            document_ids=request.document_ids,
+            max_results=request.max_results,
+            conversation_id=conversation_id,
+            background_tasks=background_tasks
+        ):
+            # SSE Format: data: <json>\n\n
+            yield f"data: {chunk}\n\n"
+
+    return StreamingResponse(
+        stream_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no" # Quan trọng cho Nginx/Render
         }
-
-    return {
-        "query_id": result["query_id"],
-        "query_text": request.query_text,
-        "answer": result["answer"],
-        "sources": result["sources"],
-        "confidence_score": result["confidence_score"],
-        "processing_time_ms": result["processing_time_ms"],
-        "created_at": datetime.utcnow()
-    }
+    )
 
 
 # ==========================================================

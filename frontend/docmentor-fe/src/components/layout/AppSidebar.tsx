@@ -13,8 +13,6 @@ import {
   FiFolder,
   FiSettings,
   FiLogOut,
-  FiCheck,
-  FiX,
   FiMessageSquare,
   FiSidebar,
 } from "react-icons/fi";
@@ -216,11 +214,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     }
   };
 
-  const getStatusColor = (id: string) =>
-    id.startsWith("temp-")
-      ? "from-yellow-500/20 to-yellow-600/20 text-yellow-400"
-      : "from-primary/20 to-secondary/20 text-primary";
-
   // --- SUB-COMPONENT: CONVERSATION ITEM ---
   const ConversationItem: React.FC<{ conv: Conversation }> = ({ conv }) => {
     const isActive = chatProps?.activeConversationId === conv.id;
@@ -236,22 +229,22 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         onClick={() =>
           !isEditing && !showDelete && chatProps?.onSelectConversation(conv.id)
         }
-        className={`group relative p-2.5 rounded-xl cursor-pointer transition-all duration-200 border ${
+        className={`group relative p-2.5 rounded-2xl cursor-pointer transition-all duration-300 border ${
           isActive
-            ? "bg-primary/10 border-primary/30 shadow-md shadow-primary/5"
+            ? "bg-white text-black border-white/20 shadow-xl shadow-white/5"
             : "bg-transparent border-transparent hover:bg-white/5"
         }`}
       >
         {/* DELETE CONFIRM OVERLAY */}
         {showDelete && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#100D20]/95 rounded-xl backdrop-blur-sm">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/95 rounded-2xl backdrop-blur-md">
             <div className="flex items-center gap-2">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleConfirmDelete(conv.id);
                 }}
-                className="px-3 py-1 text-xs font-bold text-white bg-red-500 rounded-lg hover:bg-red-600"
+                className="px-4 py-1.5 text-[11px] font-bold text-black bg-white rounded-lg hover:bg-white/90"
               >
                 Xóa
               </button>
@@ -260,7 +253,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   e.stopPropagation();
                   setShowDeleteConfirm(null);
                 }}
-                className="px-3 py-1 text-xs font-medium text-gray-300 rounded-lg bg-white/10 hover:bg-white/20"
+                className="px-4 py-1.5 text-[11px] font-medium text-white/50 rounded-lg hover:text-white transition-colors"
               >
                 Hủy
               </button>
@@ -269,11 +262,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         )}
 
         <div className="flex items-start gap-3">
-          {/* Icon */}
           <div
-            className={`flex-shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br ${getStatusColor(conv.id)} flex items-center justify-center mt-0.5 ${isTemp ? "animate-pulse" : ""}`}
+            className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center mt-0.5 transition-colors ${
+              isActive 
+                ? "bg-black text-white" 
+                : isTemp 
+                  ? "bg-white/5 text-white/40 animate-pulse" 
+                  : "bg-white/10 text-white/70 group-hover:text-white"
+            }`}
           >
-            <HiOutlineChatBubbleLeftRight className="w-4 h-4" />
+            <HiOutlineChatBubbleLeftRight className="w-4 h-5" />
           </div>
 
           <div className="relative flex-1 min-w-0 overflow-hidden">
@@ -289,84 +287,61 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     if (e.key === "Escape") setEditingId(null);
                   }}
                   autoFocus
-                  className="flex-1 min-w-0 bg-[#100D20] border border-primary/50 rounded px-2 py-1 text-xs text-white focus:outline-none"
+                  className="flex-1 min-w-0 bg-black/20 border border-white/20 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none"
                   onClick={(e) => e.stopPropagation()}
                 />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRenameSubmit(conv.id);
-                  }}
-                  className="p-1.5 text-green-400 bg-green-400/10 rounded hover:bg-green-400/20"
-                >
-                  <FiCheck size={12} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingId(null);
-                  }}
-                  className="p-1.5 text-red-400 bg-red-400/10 rounded hover:bg-red-400/20"
-                >
-                  <FiX size={12} />
-                </button>
               </div>
             ) : (
               // --- VIEW MODE ---
               <>
                 <div className="flex items-center justify-between">
-                  {/* Fix lỗi đè chữ: thêm pr-14 để chừa chỗ cho buttons */}
                   <h3
-                    className={`text-sm truncate pr-14 ${isActive ? "text-white font-medium" : "text-gray-300 group-hover:text-white"}`}
+                    className={`text-[13px] truncate pr-12 ${isActive ? "text-black font-semibold" : "text-white/70 group-hover:text-white"}`}
                   >
                     {conv.title}
                   </h3>
 
-                  {/* Status Badges */}
                   {isPinned && (
                     <TbPin
                       size={12}
-                      className="text-primary absolute top-0.5 right-0"
+                      className={`${isActive ? "text-black/60" : "text-white/40"} absolute top-0.5 right-0`}
                     />
                   )}
                 </div>
 
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] text-gray-500">
+                  <span className={`text-[10px] ${isActive ? "text-black/40" : "text-white/30"}`}>
                     {formatDate(conv.updatedAt || conv.createdAt)}
                   </span>
                   {docCount > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] text-primary/80 bg-primary/5 px-1.5 py-0.5 rounded-full border border-primary/10">
+                    <span className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border ${isActive ? "text-black/60 border-black/10" : "text-white/50 bg-white/5 border-white/10"}`}>
                       <FiFileText size={10} /> {docCount}
                     </span>
                   )}
                 </div>
 
                 {/* --- ACTION BUTTONS (Hover) --- */}
-                <div className="absolute right-0 top-0 hidden group-hover:flex items-center gap-0.5 bg-[#100D20] shadow-lg border border-white/10 rounded-lg p-0.5 z-10 animate-fade-in">
+                <div className="absolute right-0 top-0 hidden group-hover:flex items-center gap-0.5 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl p-1 z-10 animate-in fade-in zoom-in-95 duration-200">
                   <button
                     onClick={(e) => handlePinClick(conv.id, e)}
-                    className={`p-1.5 rounded-md transition-colors ${isPinned ? "text-primary bg-primary/10" : "text-gray-400 hover:text-white hover:bg-white/10"}`}
-                    title={isPinned ? "Bỏ ghim" : "Ghim"}
+                    className={`p-1.5 rounded-lg transition-colors ${isPinned ? "text-white bg-white/20" : "text-white/40 hover:text-white hover:bg-white/10"}`}
                   >
-                    <TbPin size={12} />
+                    <TbPin size={13} />
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleRenameStart(conv.id, conv.title);
                     }}
-                    className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-md transition-colors"
-                    title="Đổi tên"
+                    className="p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                   >
-                    <FiEdit2 size={12} />
+                    <FiEdit2 size={13} />
                   </button>
                   <button
                     onClick={(e) => handleDeleteClick(conv.id, e)}
-                    className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors"
-                    title="Xóa"
+                    className="p-1.5 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                   >
-                    <FiTrash2 size={12} />
+                    <FiTrash2 size={13} />
                   </button>
                 </div>
               </>
@@ -384,70 +359,76 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   // --- RENDER MAIN ---
   return (
     <aside
-      className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-[#100D20] border-r border-white/5 z-30 transition-transform duration-300 w-72 flex flex-col
+      className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-black border-r border-white/5 z-30 transition-transform duration-300 w-72 flex flex-col
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
       `}
     >
-      {/* 1. HEADER SIDEBAR (Đồng bộ h-14) */}
-      <div className="flex items-center justify-between flex-shrink-0 px-4 border-b h-14 border-white/5">
-        <span className="text-xs font-bold tracking-widest text-gray-500 uppercase">
+      {/* 1. HEADER SIDEBAR */}
+      <div className="flex items-center justify-between flex-shrink-0 px-5 border-b h-14 border-white/5">
+        <span className="text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
           Menu Chính
         </span>
-        {/* ✅ Nút Đóng Sidebar */}
         <button
           onClick={onClose}
-          className="p-1.5 text-gray-500 rounded hover:text-white hover:bg-white/5 transition-colors"
+          className="p-2 text-white/30 rounded-xl hover:text-white hover:bg-white/5 transition-all"
         >
-          <FiSidebar className="w-4 h-4 transform rotate-180" />
+          <FiSidebar size={15} className="transform rotate-180" />
         </button>
       </div>
 
       {/* 2. Navigation */}
-      <div className="flex-shrink-0 px-2 py-3">
+      <div className="flex-shrink-0 px-3 py-4">
         <nav className="space-y-1">
           {[
-            { label: "Dashboard", path: "/user/dashboard", icon: <FiHome /> },
+            { label: "Dashboard", path: "/user/dashboard", icon: <FiHome size={18} /> },
             {
               label: "Tài liệu của tôi",
               path: "/user/documents",
-              icon: <FiFolder />,
+              icon: <FiFolder size={18} />,
             },
             {
               label: "Chat AI",
               path: "/user/chat",
-              icon: <HiOutlineChatBubbleLeftRight />,
+              icon: <HiOutlineChatBubbleLeftRight size={18} />,
             },
           ].map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${location.pathname.startsWith(item.path) ? "bg-primary/10 text-primary font-medium border border-primary/20" : "text-gray-400 hover:text-white hover:bg-white/5"}`}
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] transition-all ${
+                location.pathname.startsWith(item.path) 
+                  ? "bg-white text-black font-semibold shadow-xl" 
+                  : "text-white/50 hover:text-white hover:bg-white/5"
+              }`}
             >
-              {item.icon} {item.label}
+              <span className={location.pathname.startsWith(item.path) ? "text-black" : "text-inherit"}>
+                {item.icon}
+              </span>
+              {item.label}
             </Link>
           ))}
           <Link
             to="/user/settings"
-            className="flex items-center gap-3 px-3 py-2 mx-2 text-sm text-gray-400 transition-all rounded-lg hover:text-white hover:bg-white/5"
+            className="flex items-center gap-3 px-4 py-2.5 mx-0 text-[14px] text-white/40 transition-all rounded-xl hover:text-white hover:bg-white/5"
           >
-            <FiSettings /> Cài đặt
+            <FiSettings size={18} /> Cài đặt
           </Link>
         </nav>
       </div>
 
-      <div className="h-px mx-4 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+      <div className="h-px mx-6 bg-white/5"></div>
 
       {/* 3. Chat History */}
       {chatProps ? (
         <div className="flex flex-col flex-1 min-h-0">
-          <div className="px-4 py-3">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="flex items-center gap-2 text-xs font-bold tracking-widest text-gray-400 uppercase">
-                <RiChatHistoryLine /> Lịch sử ({chatProps.conversations.length})
+          <div className="px-5 py-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] text-white/30 uppercase">
+                <RiChatHistoryLine size={14} /> Lịch sử ({chatProps.conversations.length})
               </h2>
               <button
                 onClick={chatProps.onNewConversation}
-                className="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+                className="p-2 bg-white text-black rounded-full hover:bg-white/90 transition-transform active:scale-95 shadow-lg shadow-white/5"
                 title="Chat mới"
               >
                 <FiPlus size={16} />
@@ -460,11 +441,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 placeholder="Tìm kiếm..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#1A162D] border border-white/10 rounded-lg py-2 pl-8 pr-3 text-xs text-white focus:border-primary/50 focus:outline-none placeholder:text-gray-600"
+                className="w-full bg-white/[0.03] border border-white/5 rounded-xl py-2.5 pl-9 pr-3 text-[13px] text-white focus:bg-white/[0.06] focus:outline-none placeholder:text-white/20 transition-all focus:border-white/10"
               />
-              <div className="absolute left-2.5 top-2 text-gray-500">
+              <div className="absolute left-3 top-3 text-white/20">
                 <svg
-                  className="w-3.5 h-3.5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -480,12 +461,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             </div>
           </div>
 
-          <div className="flex-1 px-3 pb-2 space-y-4 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 px-3 pb-4 space-y-4 overflow-y-auto custom-scrollbar">
             {Object.values(groupedConversations).every(
               (g) => g.length === 0
             ) ? (
-              <div className="py-10 text-xs text-center text-gray-500">
-                <FiMessageSquare className="w-8 h-8 mx-auto mb-2 opacity-20" />
+              <div className="py-12 text-[12px] text-center text-white/20">
+                <FiMessageSquare className="w-10 h-10 mx-auto mb-3 opacity-10" />
                 <p>Chưa có cuộc trò chuyện nào</p>
               </div>
             ) : (
@@ -501,10 +482,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 };
                 return (
                   <div key={key}>
-                    <div className="px-2 py-1.5 text-[10px] font-bold text-gray-500 uppercase sticky top-0 bg-[#100D20]/95 backdrop-blur-sm z-10">
+                    <div className="px-3 py-2 text-[10px] font-bold text-white/20 uppercase sticky top-0 bg-black/95 backdrop-blur-sm z-10">
                       {labels[key]}
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1.5 px-0.5">
                       {group.map((conv: Conversation) => (
                         <ConversationItem key={conv.id} conv={conv} />
                       ))}
@@ -516,16 +497,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center flex-1 text-sm text-gray-500">
+        <div className="flex items-center justify-center flex-1 text-sm text-white/20">
           Chọn "Chat AI" để xem lịch sử
         </div>
       )}
 
       {/* 4. User Profile */}
-      <div className="p-3 mt-auto border-t border-white/5 bg-[#1A162D]/50">
-        <div className="flex items-center gap-3 p-2 transition-colors cursor-pointer rounded-xl hover:bg-white/5 group">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-secondary p-[1px]">
-            <div className="w-full h-full rounded-full bg-[#100D20] flex items-center justify-center overflow-hidden">
+      <div className="p-4 mt-auto border-t border-white/5 bg-black">
+        <div className="flex items-center gap-3 p-2.5 transition-all cursor-pointer rounded-2xl hover:bg-white/5 group border border-transparent hover:border-white/5">
+          <div className="w-9 h-9 rounded-full bg-white/10 p-[1px]">
+            <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden border border-white/5">
               {avatarSrc ? (
                 <img src={avatarSrc} className="object-cover w-full h-full" />
               ) : (
@@ -534,16 +515,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">
+            <p className="text-[13px] font-semibold text-white/90 truncate">
               {displayName}
             </p>
-            <p className="text-[10px] text-gray-500 truncate">{user?.email}</p>
+            <p className="text-[10px] text-white/30 truncate font-medium">{user?.email}</p>
           </div>
           <button
             onClick={handleLogout}
-            className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1.5"
+            className="text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-2"
           >
-            <FiLogOut />
+            <FiLogOut size={16} />
           </button>
         </div>
       </div>
