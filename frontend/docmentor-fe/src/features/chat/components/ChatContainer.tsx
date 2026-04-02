@@ -53,8 +53,12 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       // Nếu đang trong quy trình tạo mới -> Dừng lại, không load history
       if (isCreatingRef.current) return;
 
+      // 1. Tải từ database
       if (!contextId) {
-        setMessages([]);
+        // ✅ CHỈ xóa tin nhắn nếu thực sự là trang trắng (không đang tạo mới, không có tin nhắn cũ)
+        if (!isCreatingRef.current && messages.length === 0) {
+          setMessages([]);
+        }
         return;
       }
 
@@ -250,16 +254,33 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         currentConvId
       );
 
-      // 4. Map Sources (CamelCase)
+      // 4. Kiểm tra xem có cần Auto-Retry không (Do tài liệu đang được học)
+      if (response.is_processing) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === aiPlaceholder.id
+              ? { ...msg, text: "DocMentor đang đọc tài liệu của bạn để đưa ra câu trả lời chính xác nhất... ⏳", status: "loading" }
+              : msg
+          )
+        );
+        
+        // Đợi 4 giây rồi thử lại chính câu hỏi này
+        setTimeout(() => {
+          handleSendMessage(messageText, undefined); // Không gửi lại file, chỉ gửi text
+        }, 4000);
+        return;
+      }
+
+      // 5. Map Sources (CamelCase)
       const mappedSources = (response.sources || []).map((s: any) => ({
         documentId: s.documentId ?? s.document_id ?? String(s.source_id ?? ""),
-        documentTitle:
-          s.documentTitle ?? s.document_title ?? s.title ?? "Tài liệu",
+        documentTitle: s.documentTitle ?? s.document_title ?? s.title ?? "Tài liệu",
         pageNumber: s.pageNumber ?? s.page_number,
         similarityScore: s.similarityScore ?? s.similarity_score ?? s.score,
+        text: s.text, // ✅ Nhận đoạn trích dẫn từ Backend
       }));
 
-      // 5. Update State
+      // 6. Update State Hoàn tất
       setMessages((prev) =>
         prev.map((msg) => {
           if (msg.id === aiPlaceholder.id) {
@@ -268,7 +289,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
               id: `msg-ai-${response.query_id}`,
               text: response.answer,
               status: "sent",
-              sources: mappedSources, // ✅ Sources hiển thị ngay lập tức
+              sources: mappedSources,
             };
           }
           if (msg.id === userMessage.id) return { ...msg, status: "sent" };

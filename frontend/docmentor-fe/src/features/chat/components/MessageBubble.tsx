@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -20,6 +20,7 @@ interface SourceReference {
   documentTitle: string;
   pageNumber: number | null;
   similarityScore?: number;
+  text?: string; // ✅ Bổ sung snippet cho tooltip
 }
 
 interface ChatMessage {
@@ -71,28 +72,34 @@ const CitationBadge: React.FC<{
               sources.map((source, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-2 p-1 rounded hover:bg-white/5"
+                  className="flex flex-col gap-1 p-2 rounded hover:bg-white/5 border-b border-white/5 last:border-0"
                 >
-                  <span className="flex-shrink-0 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center text-[9px] mt-0.5 font-bold">
-                    {idx + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-200 line-clamp-2">
-                      {source.documentTitle || "Tài liệu không tên"}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-gray-500 bg-white/5 px-1.5 rounded">
-                        {source.pageNumber
-                          ? `Trang ${source.pageNumber}`
-                          : "Toàn văn"}
-                      </span>
-                      {source.similarityScore && (
-                        <span className="text-[10px] text-green-500">
-                          {Math.round(source.similarityScore * 100)}% khớp
+                  <div className="flex items-start gap-2">
+                    <span className="flex-shrink-0 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center text-[9px] mt-0.5 font-bold">
+                      {sources.length === 1 ? citation : (idx + 1)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-gray-200 line-clamp-1">
+                        {source.documentTitle || "Tài liệu"}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] text-gray-500 bg-white/5 px-1.5 rounded">
+                          {source.pageNumber ? `Trang ${source.pageNumber}` : "Toàn văn"}
                         </span>
-                      )}
+                        {source.similarityScore && (
+                          <span className="text-[10px] text-green-500">
+                            {Math.round(source.similarityScore * 100)}% khớp
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  {/* ✅ HIỂN THỊ SNIPPET TRONG TOOLTIP */}
+                  {source.text && (
+                    <p className="text-[11px] text-gray-400 italic leading-relaxed mt-1 border-l-2 border-primary/30 pl-2">
+                      "{source.text.length > 150 ? source.text.substring(0, 150) + "..." : source.text}"
+                    </p>
+                  )}
                 </div>
               ))
             ) : (
@@ -184,12 +191,49 @@ const MessageBubble = React.memo(
     const [copied, setCopied] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedText, setEditedText] = useState(message.text);
+    const [typingText, setTypingText] = useState("");
+    const [isTyping, setIsTyping] = useState(false);
+    const hasStartedTyping = useRef(false);
 
-    const displayText = useMemo(
-      () =>
-        message.text.replace(/\[(?:Nguồn|Source)\s*\d+:\s*.*?\]/gi, "").trim(),
-      [message.text]
-    );
+    // ✅ Hiệu ứng Typewriter: CHỈ chạy cho tin nhắn AI vừa mới gửi xong
+    useEffect(() => {
+      const isNewAiMessage = !isUser && !isLoading && message.status === "sent" && !hasStartedTyping.current;
+      
+      if (isNewAiMessage && message.text) {
+        setIsTyping(true);
+        hasStartedTyping.current = true;
+
+        const words = message.text.split(" ");
+        let currentText = "";
+        let i = 0;
+
+        const interval = setInterval(() => {
+          if (i < words.length) {
+            currentText += (i === 0 ? "" : " ") + words[i];
+            setTypingText(currentText);
+            i++;
+          } else {
+            setIsTyping(false);
+            clearInterval(interval);
+          }
+        }, 15);
+
+        return () => clearInterval(interval);
+      } else {
+        // Nếu là tin nhắn User, tin nhắn đang Load, hoặc tin nhắn CŨ từ lịch sử
+        setTypingText(message.text || "");
+        setIsTyping(false);
+        // Đánh dấu đã "gõ" xong để không chạy lại hiệu ứng khi re-render
+        if (message.text) hasStartedTyping.current = true;
+      }
+    }, [isUser, isLoading, message.text, message.status]);
+
+    const displayText = useMemo(() => {
+      const textToProcess = isTyping ? typingText : message.text;
+      return textToProcess
+        .replace(/\[(?:Nguồn|Source)\s*\d+:\s*.*?\]/gi, "")
+        .trim();
+    }, [isTyping, typingText, message.text]);
     const activeSources = useMemo(
       () => message.sources || [],
       [message.sources]
@@ -402,24 +446,45 @@ const MessageBubble = React.memo(
                   </ReactMarkdown>
                 )}
 
-                {/* Sources Footer */}
+                {/* Sources Footer - Optimized Grouping */}
                 {!isUser && activeSources.length > 0 && (
                   <div className="pt-3 mt-4 border-t border-white/10">
                     <div className="flex items-center gap-1 mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                      <FiBookOpen size={10} /> Nguồn tham khảo
+                      <FiBookOpen size={10} /> {activeSources.length} Nguồn tham khảo
                     </div>
-                    <div className="grid grid-cols-1 gap-1.5">
-                      {activeSources.map((src, i) => (
+                    <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                      {/* ✅ GỘP NGUỒN TRÙNG LẶP */}
+                      {Object.values(activeSources.reduce((acc: any, src, idx) => {
+                        const key = src.documentId || src.documentTitle;
+                        if (!acc[key]) {
+                          acc[key] = { ...src, indices: [idx + 1], pages: new Set() };
+                        } else {
+                          acc[key].indices.push(idx + 1);
+                        }
+                        if (src.pageNumber) acc[key].pages.add(src.pageNumber);
+                        return acc;
+                      }, {})).map((group: any, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-2 p-1.5 rounded bg-black/20 hover:bg-black/40 border border-transparent hover:border-white/10 transition-colors cursor-pointer group"
+                          className="flex items-center gap-2 p-2 rounded bg-black/20 hover:bg-black/40 border border-transparent hover:border-white/10 transition-colors cursor-pointer group"
                         >
-                          <span className="w-4 h-4 bg-gray-700 group-hover:bg-primary group-hover:text-white transition-colors rounded-full flex items-center justify-center text-[9px] font-bold text-gray-300">
-                            {i + 1}
-                          </span>
-                          <span className="flex-1 text-xs text-gray-400 truncate group-hover:text-gray-200">
-                            {src.documentTitle || "Tài liệu"}
-                          </span>
+                          <div className="flex -space-x-1 overflow-hidden">
+                            {group.indices.map((idx: number) => (
+                              <span key={idx} className="w-5 h-5 bg-gray-700 group-hover:bg-primary group-hover:text-white transition-colors rounded-full flex items-center justify-center text-[9px] font-bold text-gray-300 border border-[#1A162D]">
+                                {idx}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="block text-[11px] text-gray-400 truncate group-hover:text-gray-200">
+                              {group.documentTitle || "Tài liệu"}
+                            </span>
+                            {group.pages.size > 0 && (
+                              <span className="text-[9px] text-gray-600">
+                                Trang: {Array.from(group.pages).join(", ")}
+                              </span>
+                            )}
+                          </div>
                           <FiExternalLink
                             size={10}
                             className="text-gray-600 group-hover:text-gray-400"

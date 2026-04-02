@@ -62,6 +62,7 @@ class DocumentProcessor:
 
             # ✅ AWAIT hàm lấy nội dung file
             file_bytes = await self._get_file_content(file_path)
+            logger.info(f"📥 Successfully downloaded {len(file_bytes)} bytes")
 
             if file_ext == 'pdf':
                 text = self.extract_pdf(file_bytes)
@@ -76,10 +77,9 @@ class DocumentProcessor:
                 except:
                     raise Exception(f"Unsupported file type: {file_ext}")
             
-            if not text or len(text.strip()) < 50:
-                raise Exception(f"Document is empty or too short: {len(text) if text else 0} chars")
-            
             logger.info(f"✅ Extracted {len(text)} characters")
+            if not text or len(text.strip()) < 10:
+                raise Exception("Document text content is too empty to process.")
             
             # Step 2: Split into chunks
             logger.info("✂️ Step 2: Splitting into chunks...")
@@ -105,31 +105,42 @@ class DocumentProcessor:
                 chunks=chunks_with_metadata
             )
             
-            # Step 5: Update DB
-            existing_metadata = document.metadata_ or {}
-            document.metadata_ = {
-                **existing_metadata,
-                'total_chunks': len(text_chunks),
-                'total_characters': len(text),
-                'processing_status': 'completed',
-                'processed_at': str(import_datetime.now()) # Lưu ý import datetime
-            }
-            document.processed = True
-            db.commit()
-            logger.info(f"✅ Successfully processed document {document_id}")
+            # Step 5: Update DB (Re-fetch to avoid stale session)
+            logger.info("💾 Step 5: Updating database...")
+            
+            # Khởi tạo session ngắn để commit
+            document = db.query(Document).filter(Document.id == document_id).first()
+            if document:
+                existing_metadata = document.metadata_ or {}
+                document.metadata_ = {
+                    **existing_metadata,
+                    'total_chunks': len(text_chunks),
+                    'total_characters': len(text),
+                    'processing_status': 'completed',
+                    'processed_at': str(import_datetime.now())
+                }
+                document.processed = True
+                
+                db.add(document)
+                db.commit()
+                logger.info(f"✅ [DONE] Successfully processed document {document_id}")
+            else:
+                logger.error(f"❌ Document {document_id} vanished during processing!")
+            
             return True
             
         except Exception as e:
             logger.error(f"❌ Error processing document {document_id}: {str(e)}")
             try:
-                # Re-fetch document to avoid stale session issues
+                # Cập nhật trạng thái thất bại một cách độc lập
+                db.rollback()
                 document = db.query(Document).filter(Document.id == document_id).first()
                 if document:
                     meta = document.metadata_ or {}
                     document.metadata_ = {**meta, 'processing_status': 'failed', 'error': str(e)}
                     db.commit()
-            except:
-                pass
+            except Exception as inner_e:
+                logger.error(f"❌ Failed to even record the failure! {inner_e}")
             raise
     
     # ✅ Các hàm extract giờ nhận bytes trực tiếp, không cần path nữa

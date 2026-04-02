@@ -47,11 +47,12 @@ const convertToChatMessages = (queries: any[]): ChatMessage[] => {
 
       // Map thủ công từ snake_case (Backend) sang camelCase (Frontend)
       const mappedSources = parsedSources.map((src: any) => ({
-        documentId: src.document_id?.toString(),
-        documentTitle: src.document_title || "Tài liệu",
-        pageNumber: src.page_number,
+        documentId: src.documentId ?? (src.document_id?.toString()),
+        documentTitle: src.documentTitle ?? (src.document_title || "Tài liệu"),
+        pageNumber: src.pageNumber ?? src.page_number,
         // Backend có thể trả về 'score' hoặc 'similarity_score' tùy endpoint
-        similarityScore: src.score || src.similarity_score,
+        similarityScore: src.similarityScore ?? (src.score || src.similarity_score),
+        text: src.text, // ✅ Bổ sung nội dung đoạn trích dẫn (snippet)
       }));
 
       messages.push({

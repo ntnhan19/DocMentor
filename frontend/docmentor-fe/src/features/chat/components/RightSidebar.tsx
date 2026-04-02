@@ -18,8 +18,9 @@ import {
   analysisService,
   QuizQuestion,
 } from "@/services/analysis/analysisService";
-import { SummaryViewer } from "./analysis/SummaryViewer"; // Đường dẫn tới file bạn vừa tạo
-import { QuizViewer } from "./analysis/QuizViewer"; // Đường dẫn tới file bạn vừa tạo
+import { SummaryViewer } from "./analysis/SummaryViewer";
+import { QuizViewer } from "./analysis/QuizViewer";
+import { useDocumentStore } from "@/store/useDocumentStore";
 
 interface RightSidebarProps {
   isOpen: boolean;
@@ -48,6 +49,17 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [summaryResult, setSummaryResult] = useState<string | null>(null);
   const [quizResult, setQuizResult] = useState<QuizQuestion[] | null>(null);
+
+  // 1. Kết nối với Global Document Store
+  const { docStatuses, updatePollingDocs } = useDocumentStore();
+
+  // 2. Tự động theo dõi các tài liệu đang chọn
+  React.useEffect(() => {
+    const unprocessedIds = selectedDocuments.map(d => d.id);
+    if (unprocessedIds.length > 0) {
+      updatePollingDocs(unprocessedIds);
+    }
+  }, [selectedDocuments, updatePollingDocs]);
 
   React.useEffect(() => {
     if (activeTab === "library" && libraryDocs.length === 0) loadLibrary();
@@ -220,8 +232,12 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                         className="group relative p-3 bg-[#1A162D] rounded-xl border border-white/5 hover:border-primary/30 transition-all"
                       >
                         <div className="flex gap-3">
-                          <div className="p-2 rounded-lg bg-primary/10 text-primary h-fit">
-                            <FiFileText />
+                          <div className={`p-2 rounded-lg h-fit ${docStatuses[doc.id] === false ? "bg-secondary/10 text-secondary" : "bg-primary/10 text-primary"}`}>
+                            {docStatuses[doc.id] === false ? (
+                              <FiLoader className="animate-spin" />
+                            ) : (
+                              <FiFileText />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm leading-snug text-gray-200 line-clamp-2">

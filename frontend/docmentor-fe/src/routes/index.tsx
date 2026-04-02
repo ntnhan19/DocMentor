@@ -70,10 +70,9 @@ const router = createBrowserRouter([
           { path: "documents", element: <DocumentsPage /> },
           { path: "documents/:documentId", element: <DocumentDetailPage /> },
           {
-            path: "chat",
-            element: <ChatPage />, // ChatPage cho user (conversation + sidebar)
+            path: "chat/:conversationId?",
+            element: <ChatPage />, // ChatPage cho user (hỗ trợ cả hội thoại mới và cũ)
           },
-          { path: "chat/:conversationId", element: <ChatPage /> }, // ✨ User bookmark conversation
           { path: "settings", element: <SettingsPage /> },
         ],
       },

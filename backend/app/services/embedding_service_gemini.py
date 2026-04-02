@@ -1,10 +1,9 @@
-# app/services/embedding_service_gemini.py
-
 import google.generativeai as genai
 from pinecone import Pinecone
 from typing import List, Dict, Any
 from ..config import settings
 import logging
+import asyncio # ✅ Thêm asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +29,10 @@ class EmbeddingServiceGemini:
         """
         try:
             result = genai.embed_content(
-                model="models/text-embedding-004",
+                model="models/gemini-embedding-001",
                 content=text,
-                task_type="retrieval_document"  # For storing in vector DB
+                task_type="retrieval_document",
+                output_dimensionality=768  # ✅ Ép về 768 chiều
             )
             return result['embedding']
         except Exception as e:
@@ -56,9 +56,10 @@ class EmbeddingServiceGemini:
                 
                 # Gemini batch embedding
                 results = genai.embed_content(
-                    model="models/text-embedding-004",
+                    model="models/gemini-embedding-001",
                     content=batch,
-                    task_type="retrieval_document"
+                    task_type="retrieval_document",
+                    output_dimensionality=768  # ✅ Ép về 768 chiều
                 )
                 
                 # Extract embeddings
@@ -83,9 +84,10 @@ class EmbeddingServiceGemini:
         """
         try:
             result = genai.embed_content(
-                model="models/text-embedding-004",
+                model="models/gemini-embedding-001",
                 content=query,
-                task_type="retrieval_query"  # Optimized for queries
+                task_type="retrieval_query",
+                output_dimensionality=768  # ✅ Ép về 768 chiều
             )
             return result['embedding']
         except Exception as e:
@@ -132,7 +134,10 @@ class EmbeddingServiceGemini:
             
             for i in range(0, len(vectors), batch_size):
                 batch = vectors[i:i + batch_size]
-                self.index.upsert(vectors=batch)
+                # ✅ FIX: Chạy lệnh đồng bộ (upsert) trong một thread riêng
+                # Để không làm treo (block) Event Loop của FastAPI
+                await asyncio.to_thread(self.index.upsert, vectors=batch)
+                logger.info(f"  - Uploaded batch {(i // batch_size) + 1}/{(len(vectors) - 1) // batch_size + 1}")
             
             logger.info(f"✅ Successfully stored {len(vectors)} chunks for document {document_id}")
             return True

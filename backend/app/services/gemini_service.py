@@ -12,7 +12,7 @@ class GeminiService:
     
     def __init__(self):
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-1.5-flash-001')
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
         
         self.safety_settings = {
             'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
@@ -21,7 +21,7 @@ class GeminiService:
             'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE',
         }
         
-        logger.info("✅ Gemini 1.5 Flash-001 initialized")
+        logger.info("✅ Gemini 2.5 Flash initialized")
     
     def _safe_get_text(self, response) -> str:
         """Safely extract text from Gemini response"""
@@ -41,10 +41,10 @@ class GeminiService:
         """Generate answer for RAG"""
         try:
             # Nếu có system instruction, tạo model mới tạm thời (hoặc dùng chat session)
-            # Với Flash 1.5, ta có thể đưa system instruction thẳng vào prompt để tiết kiệm
+            # Với Flash 2.5, ta có thể đưa system instruction thẳng vào prompt để tiết kiệm
             full_prompt = f"{system_instruction}\n\nCONTEXT:\n{context}\n\nQUERY:\n{query}"
             
-            logger.info("🤖 Generating answer with Gemini 1.5 Flash...")
+            logger.info("🤖 Generating answer with Gemini 2.5 Flash...")
             
             # 🔥 FIX 3: Dùng hàm async
             response = await self.model.generate_content_async(
@@ -56,8 +56,8 @@ class GeminiService:
             return self._safe_get_text(response)
             
         except Exception as e:
-            logger.error(f"❌ Error generating answer: {str(e)}")
-            return "Xin lỗi, tôi không thể trả lời câu hỏi này lúc này."
+            logger.error(f"❌ Error generating answer: {str(e)}", exc_info=True)
+            return "Xin lỗi, tôi không thể trả lời câu hỏi này lúc này. Vui lòng thử lại sau."
 
     async def generate_summary(self, text: str, length: str = "medium") -> str:
         """Generate summary"""
