@@ -1,6 +1,32 @@
 # DocMentor
 
-DocMentor is an AI-powered document assistant that helps users upload documents, ask natural-language questions, receive grounded answers with citations, generate summaries, extract key concepts, and create quizzes for learning or research.
+## 🌟 About
+
+DocMentor is a modern AI-powered document management and Q&A platform that leverages Retrieval-Augmented Generation (RAG) technology. Users can upload documents, ask natural-language questions, and receive AI-generated answers grounded in document content with precise citations.
+
+### 🎯 Key Highlights
+- **RAG-powered Q&A**: Get accurate, grounded answers backed by document sources
+- **AI Analysis**: Auto-generate summaries, extract key concepts, and create interactive quizzes
+- **Multi-role Support**: Student, Lecturer, and Admin roles with tailored interfaces
+- **Guest Mode**: Try the demo without authentication
+- **Export Features**: Export analysis results as PDF for sharing and documentation
+- **Real-time Analytics**: Track document usage, query patterns, and user activity
+
+### 📊 Technical Stack
+- **Frontend**: React 19 + TypeScript + Tailwind CSS + Vite
+- **Backend**: FastAPI + PostgreSQL + SQLAlchemy
+- **AI/ML**: Google Gemini (embeddings & generation)
+- **Vector DB**: Pinecone (semantic search)
+- **Storage**: Supabase
+- **Deployment**: Vercel (frontend) + Render (backend)
+
+### 🔗 Links
+- **Live Demo**: https://doc-mentor-one.vercel.app
+- **Backend API**: https://docmentor-backend.onrender.com (when deployed)
+
+---
+
+DocMentor is an AI-powered document assistant that helps users upload documents, ask natural-language questions, receive grounded answers with citations, generate summaries, extract key concepts, and create interactive quizzes. It combines modern full-stack development with cutting-edge AI capabilities.
 
 The project is organized as a full-stack application:
 
@@ -295,7 +321,7 @@ The backend includes a `Procfile` suitable for Render:
 web: uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-The backend also includes `runtime.txt` for the Python runtime. The frontend includes `vercel.json` for SPA routing on Vercel. Configure all required environment variables in the deployment platform before publishing.
+The backend also includes `runtime.txt` for the Python runtime. The frontend includes `vercel.json` for SPA routing on Vercel. Configure all required environment variables in the deployment platform.
 
 ## Development Notes
 
