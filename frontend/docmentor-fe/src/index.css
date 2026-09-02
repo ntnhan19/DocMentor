@@ -4,30 +4,40 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* 🍎 Apple-Inspired Minimalist Dark Palette (Monochrome Focus) */
-  --apple-bg: #000000;
-  --apple-surface: #0A0A0A;
-  --apple-surface-secondary: #1C1C1E;
-  --apple-primary: #FFFFFF;
-  --apple-primary-muted: #86868B;
-  --apple-accent: #FFFFFF;
-  --apple-border: rgba(255, 255, 255, 0.08);
-  --apple-text-main: #FFFFFF;
-  --apple-text-secondary: #86868B;
-  
-  /* macOS Professional Gray Tones */
-  --apple-gray-100: #F5F5F7;
-  --apple-gray-200: #E8E8ED;
-  --apple-gray-700: #86868B;
-  --apple-gray-800: #424245;
-  --apple-gray-900: #1D1D1F;
+@layer base {
+  :root {
+    /* Light Mode Palette - Clean Professional SaaS */
+    --background: #ffffff;
+    --accent: #f8fafc;
+    --primary: #2563eb;
+    --secondary: #0ea5e9;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    
+    /* Glassmorphism Tokens */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-bg-heavy: rgba(255, 255, 255, 0.96);
+    --glass-blur: blur(20px);
+    --glass-blur-heavy: blur(40px);
+  }
 
-  /* Glassmorphism Tokens */
-  --glass-bg: rgba(10, 10, 10, 0.4);
-  --glass-bg-heavy: rgba(5, 5, 5, 0.96);
-  --glass-blur: blur(25px);
-  --glass-blur-heavy: blur(40px);
+  .dark {
+    /* Dark Mode Palette - Clean Non-Purple Slate */
+    --background: #09090b;
+    --accent: #18181b;
+    --primary: #3b82f6;
+    --secondary: #38bdf8;
+    --text-main: #fafafa;
+    --text-muted: #a1a1aa;
+    --border-color: #27272a;
+    
+    /* Glassmorphism Tokens */
+    --glass-bg: rgba(9, 9, 11, 0.7);
+    --glass-bg-heavy: rgba(9, 9, 11, 0.96);
+    --glass-blur: blur(20px);
+    --glass-blur-heavy: blur(40px);
+  }
 }
 
 * {
@@ -37,15 +47,14 @@
 }
 
 body {
-  background-color: var(--apple-bg) !important;
-  color: var(--apple-text-main);
-  /* Ép font Apple chuẩn nhất */
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--background);
+  color: var(--text-main);
+  font-family: "SF Pro Display", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Apple Glass Effect Utility - Standard */
+/* Glass Effect Utility - Standard */
 .apple-glass {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
