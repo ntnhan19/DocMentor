@@ -25,10 +25,15 @@ export default function Footer() {
         </div>
         
         <div className="mt-8 pt-8 border-t border-border-color flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-text-muted text-sm">
-            © 2025 DocMentor. All rights reserved.
-          </p>
-          <div className="flex gap-4 text-sm">
+          <div className="flex flex-col items-center md:items-start gap-1">
+            <p className="text-text-muted text-sm">
+              © 2025 DocMentor. All rights reserved.
+            </p>
+            <p className="text-text-muted/60 text-xs mt-2 md:mt-0">
+              Built with React 19 • TypeScript • Tailwind CSS • FastAPI • PostgreSQL • Gemini
+            </p>
+          </div>
+          <div className="flex gap-4 text-sm mt-4 md:mt-0">
             <Link to="#" className="text-text-muted hover:text-text-main transition-colors">Privacy Policy</Link>
             <Link to="#" className="text-text-muted hover:text-text-main transition-colors">Terms of Service</Link>
           </div>

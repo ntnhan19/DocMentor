@@ -6,31 +6,31 @@
 
 @layer base {
   :root {
-    /* Light Mode Palette - Clean Professional SaaS */
-    --background: #ffffff;
-    --accent: #f8fafc;
-    --primary: #2563eb;
-    --secondary: #0ea5e9;
+    /* Light Mode Palette - Academic & Professional (Non-AI Default) */
+    --background: #fdfdfd;
+    --accent: #f1f5f9;
+    --primary: #1e3a8a; /* Deep Navy */
+    --secondary: #d97706; /* Amber/Orange Accent */
     --text-main: #0f172a;
     --text-muted: #64748b;
     --border-color: #e2e8f0;
     
     /* Glassmorphism Tokens */
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-bg-heavy: rgba(255, 255, 255, 0.96);
+    --glass-bg: rgba(253, 253, 253, 0.7);
+    --glass-bg-heavy: rgba(253, 253, 253, 0.96);
     --glass-blur: blur(20px);
     --glass-blur-heavy: blur(40px);
   }
 
   .dark {
-    /* Dark Mode Palette - Clean Non-Purple Slate */
-    --background: #09090b;
-    --accent: #18181b;
-    --primary: #3b82f6;
-    --secondary: #38bdf8;
-    --text-main: #fafafa;
-    --text-muted: #a1a1aa;
-    --border-color: #27272a;
+    /* Dark Mode Palette - Academic Dark (Non-AI Default) */
+    --background: #0f172a; /* Slate 900 */
+    --accent: #1e293b; /* Slate 800 */
+    --primary: #60a5fa; /* Light Navy/Blue for dark mode contrast */
+    --secondary: #fbbf24; /* Amber 400 */
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
     
     /* Glassmorphism Tokens */
     --glass-bg: rgba(9, 9, 11, 0.7);

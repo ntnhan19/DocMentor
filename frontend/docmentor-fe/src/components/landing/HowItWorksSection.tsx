@@ -4,18 +4,18 @@ import { Upload, MessageSquare, Download } from "lucide-react";
 const steps = [
   {
     icon: <Upload className="text-primary" size={32} />,
-    title: "1. Upload Documents",
-    description: "Upload your PDFs, Word documents, or text files to our secure cloud. We support multiple files and organize them into folders.",
+    title: "1. Tải tài liệu lên",
+    description: "Tải file PDF, Word, hoặc văn bản của bạn lên hệ thống lưu trữ an toàn. Hỗ trợ nhiều file cùng lúc và sắp xếp theo thư mục.",
   },
   {
     icon: <MessageSquare className="text-secondary" size={32} />,
-    title: "2. AI Analysis & Chat",
-    description: "Our Gemini-powered engine instantly analyzes your files. Start chatting, ask questions, or generate summaries.",
+    title: "2. Phân tích & Trò chuyện với AI",
+    description: "Hệ thống được cung cấp bởi Gemini sẽ phân tích tài liệu ngay lập tức. Bắt đầu trò chuyện, đặt câu hỏi, hoặc tạo tóm tắt.",
   },
   {
     icon: <Download className="text-primary" size={32} />,
-    title: "3. Export Insights",
-    description: "Save your AI-generated quizzes, summaries, and key concepts as beautiful PDFs to study or share later.",
+    title: "3. Xuất kết quả",
+    description: "Lưu quiz, tóm tắt, và các khái niệm chính do AI tạo ra thành file PDF đẹp mắt để ôn tập hoặc chia sẻ sau này.",
   },
 ];
 
@@ -25,10 +25,10 @@ export default function HowItWorksSection() {
       <div className="container mx-auto px-6 max-w-7xl">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-text-main mb-4">
-            How it works
+            Cách hoạt động
           </h2>
           <p className="text-text-muted text-lg">
-            From raw documents to actionable insights in three simple steps.
+            Từ tài liệu thô đến thông tin hữu ích, chỉ trong 3 bước đơn giản.
           </p>
         </div>
 
