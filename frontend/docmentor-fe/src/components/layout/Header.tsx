@@ -62,14 +62,12 @@ const Header: React.FC<HeaderProps> = ({ hideAuthButtons }) => {
             className="flex items-center w-64 gap-3 cursor-pointer group"
             onClick={() => navigate("/")}
           >
-            <div className="flex items-center justify-center w-8 h-8 transition-transform rounded-lg bg-white group-hover:scale-105 shadow-xl shadow-white/5">
-              <img
-                src="/assets/logo.png"
-                alt="Logo"
-                className="object-contain w-5 h-5 filter brightness-0"
-              />
-            </div>
-            <span className="text-[17px] font-semibold tracking-tight text-white/90">
+            <img
+              src="/assets/logo.png"
+              alt="Logo"
+              className="object-contain w-8 h-8 invert transition-transform group-hover:scale-105"
+            />
+            <span className="text-[17px] font-bold tracking-tight text-white/90">
               DocMentor
             </span>
           </div>

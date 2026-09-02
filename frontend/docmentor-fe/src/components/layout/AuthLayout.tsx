@@ -39,14 +39,12 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
             to="/"
             className="flex items-center gap-3 transition-opacity hover:opacity-80 w-fit"
           >
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white shadow-xl shadow-white/5">
-              <img
-                src="/assets/logo.png"
-                alt="DocMentor"
-                className="object-contain w-6 h-6 filter brightness-0"
-              />
-            </div>
-            <span className="text-2xl font-semibold tracking-tight text-white/90">DocMentor</span>
+            <img
+              src="/assets/logo.png"
+              alt="DocMentor Logo"
+              className="object-contain w-8 h-8 invert"
+            />
+            <span className="text-2xl font-bold tracking-tight text-white/90">DocMentor</span>
           </Link>
         </div>
       </header>

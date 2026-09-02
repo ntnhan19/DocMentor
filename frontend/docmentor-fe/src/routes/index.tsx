@@ -20,17 +20,12 @@ import AdminLayout from "@/components/layout/admin/AdminLayout";
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage";
 // import AdminDocumentsPage from "@/pages/admin/AdminDocumentsPage";
 // import AdminUsersPage from "@/pages/admin/AdminUsersPage";
+import LandingPage from "../pages/LandingPage";
+
 const router = createBrowserRouter([
-  // ✨ THAY ĐỔI: / route chuyển thành ChatPage cho guest
   {
     path: "/",
-    element: <GuestLayout />,
-    children: [
-      {
-        index: true,
-        element: <ChatPage />, // ✨ Hiển thị ChatPage thay vì HomePage
-      },
-    ],
+    element: <LandingPage />,
   },
 
   {

@@ -1,15 +1,18 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
-        // Bảng màu mới dựa trên theme trong ảnh
-        background: "#100D20", // Màu nền chính (tím than đậm)
-        accent: "#1A162D", // Màu nền phụ cho card, input...
-        primary: "#8A42FF", // Màu nhấn chính (tím)
-        secondary: "#00D4FF", // Màu nhấn phụ (xanh cyan)
-        "text-muted": "#A9A5B8", // Màu chữ phụ (xám nhạt)
+        // Sử dụng CSS variables để hỗ trợ Light/Dark mode
+        background: "var(--background)",
+        accent: "var(--accent)",
+        primary: "var(--primary)",
+        secondary: "var(--secondary)",
+        "text-main": "var(--text-main)",
+        "text-muted": "var(--text-muted)",
+        "border-color": "var(--border-color)",
       },
       animation: {
         "fade-in": "fadeIn 0.6s ease-out",
